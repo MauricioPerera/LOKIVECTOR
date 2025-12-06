@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LokiVector Admin Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: #333; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-item h3 { margin: 0; font-size: 14px; color: #888; }
+        .stat-item p { margin: 5px 0 0; font-size: 24px; font-weight: bold; color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: #666; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-free { background: #e1ecf4; color: #39739d; }
+        .badge-pro { background: #d1f7c4; color: #2c662d; }
+        .progress-bar { background: #eee; height: 8px; border-radius: 4px; overflow: hidden; width: 100px; }
+        .progress-fill { height: 100%; background: #4caf50; }
+        .refresh-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .refresh-btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>LokiVector SaaS Admin</h1>
+        <button class="refresh-btn" onclick="fetchStats()">Refresh Data</button>
+    </div>
+
+    <!-- System Stats -->
+    <div class="card">
+        <h2>System Overview</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h3>Memory Usage (Heap)</h3>
+                <p id="mem-usage">- MB</p>
+            </div>
+            <div class="stat-item">
+                <h3>Uptime</h3>
+                <p id="uptime">- s</p>
+            </div>
+            <div class="stat-item">
+                <h3>Total Collections</h3>
+                <p id="total-cols">-</p>
+            </div>
+            <div class="stat-item">
+                <h3>Total Documents</h3>
+                <p id="total-docs">-</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Usage -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Client Usage & Quotas</h2>
+            <button class="refresh-btn" style="background: #28a745;" onclick="openKeyModal()">+ New Key</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>API Key</th>
+                    <th>Plan</th>
+                    <th>Usage</th>
+                    <th>Limit</th>
+                    <th>% Used</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="clients-table">
+                <!-- Rows injected via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Key Modal -->
+<div id="keyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+    <div style="background:white; width:400px; margin:100px auto; padding:20px; border-radius:8px;">
+        <h2>Create New API Key</h2>
+        <input type="text" id="new-key" placeholder="API Key (e.g., sk_client_1)" style="width:100%; padding:8px; margin-bottom:10px;">
+        <select id="new-plan" style="width:100%; padding:8px; margin-bottom:10px;">
+            <option value="free">Free</option>
+            <option value="pro">Pro</option>
+            <option value="enterprise">Enterprise</option>
+        </select>
+        <input type="number" id="new-limit" placeholder="Request Limit (default 1000)" style="width:100%; padding:8px; margin-bottom:10px;">
+        <input type="text" id="new-collections" placeholder="Allowed Collections (comma-sep or *)" style="width:100%; padding:8px; margin-bottom:10px;">
+        
+        <div style="text-align:right;">
+            <button onclick="closeKeyModal()" style="padding:8px 16px; background:#ccc; border:none; border-radius:4px;">Cancel</button>
+            <button onclick="createKey()" style="padding:8px 16px; background:#007bff; color:white; border:none; border-radius:4px;">Create</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function fetchStats() {
+        try {
+            // In SaaS mode, this endpoint might need an Admin Key, 
+            // but for MVP we assume it's public or protected by internal network rules
+            const res = await fetch('http://localhost:4000/admin/stats');
+            const data = await res.json();
+            
+            // Update System Stats
+            document.getElementById('mem-usage').textContent = (data.system.memory.heapUsed / 1024 / 1024).toFixed(2) + ' MB';
+            document.getElementById('uptime').textContent = Math.floor(data.system.uptime) + 's';
+            document.getElementById('total-cols').textContent = data.system.collections;
+            document.getElementById('total-docs').textContent = data.system.totalDocuments;
+
+            // Update Client Table
+            const tbody = document.getElementById('clients-table');
+            tbody.innerHTML = '';
+            
+            data.clients.forEach(client => {
+                const percentVal = parseFloat(client.percent);
+                const color = percentVal > 90 ? '#dc3545' : (percentVal > 50 ? '#ffc107' : '#4caf50');
+                
+                const row = `
+                    <tr>
+                        <td><code>${client.key}</code></td>
+                        <td><span class="badge badge-${client.plan.toLowerCase()}">${client.plan}</span></td>
+                        <td>${client.usage}</td>
+                        <td>${client.limit}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${client.percent}; background-color: ${color}"></div>
+                                </div>
+                                <span>${client.percent}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <button onclick="deleteKey('${client.fullKey}')" style="color: red; border: none; background: none; cursor: pointer;">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+        } catch (err) {
+            console.error('Error fetching stats:', err);
+            // alert('Failed to fetch stats. Ensure server is running.');
+        }
+    }
+
+    function openKeyModal() {
+        document.getElementById('keyModal').style.display = 'block';
+    }
+
+    function closeKeyModal() {
+        document.getElementById('keyModal').style.display = 'none';
+    }
+
+    async function createKey() {
+        const key = document.getElementById('new-key').value;
+        const plan = document.getElementById('new-plan').value;
+        const limit = document.getElementById('new-limit').value;
+        let collections = document.getElementById('new-collections').value;
+
+        if (!key) return alert('Key is required');
+
+        if (collections !== '*') {
+            collections = collections.split(',').map(c => c.trim());
+        }
+
+        try {
+            const res = await fetch('http://localhost:4000/admin/keys', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, plan, limit: parseInt(limit) || 1000, collections })
+            });
+            
+            if (res.ok) {
+                alert('Key created!');
+                closeKeyModal();
+                fetchStats();
+            } else {
+                const err = await res.json();
+                alert('Error: ' + err.error);
+            }
+        } catch (e) {
+            alert('Request failed');
+        }
+    }
+
+    async function deleteKey(key) {
+        if (!confirm(`Delete API key ${key}?`)) return;
+
+        try {
+            const res = await fetch(`http://localhost:4000/admin/keys/${key}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchStats();
+            } else {
+                alert('Failed to delete');
+            }
+        } catch (e) {
+            alert('Request failed');
+        }
+    }
+
+    // Initial Load
+    fetchStats();
+    // Auto refresh every 5s
+    setInterval(fetchStats, 5000);
+</script>
+
+</body>
+</html>

@@ -7084,7 +7084,25 @@
      * @memberof Collection
      */
     Collection.prototype.find = function (query) {
-      return this.chain().find(query).data();
+      // Check if we have a cache and if the query is suitable for caching
+      // For simplicity, we only cache stringified queries for now
+      if (this.mruCache) {
+        var queryKey = JSON.stringify(query);
+        var cachedResult = this.mruCache.get(queryKey);
+        if (cachedResult) {
+          return cachedResult;
+        }
+      }
+      
+      var result = this.chain().find(query).data();
+      
+      // Cache the result if we have a cache
+      if (this.mruCache) {
+        var cacheKey = JSON.stringify(query);
+        this.mruCache.set(cacheKey, result);
+      }
+      
+      return result;
     };
 
     /**
@@ -7526,31 +7544,16 @@
       };
     }
 
-    function KeyValueStore() { }
+    function KeyValueStore() {
+      this.storage = new Map();
+    }
 
     KeyValueStore.prototype = {
-      keys: [],
-      values: [],
-      sort: function (a, b) {
-        return (a < b) ? -1 : ((a > b) ? 1 : 0);
-      },
-      setSort: function (fun) {
-        this.bs = new BSonSort(fun);
-      },
-      bs: function () {
-        return new BSonSort(this.sort);
-      },
       set: function (key, value) {
-        var pos = this.bs(this.keys, key);
-        if (pos.found) {
-          this.values[pos.index] = value;
-        } else {
-          this.keys.splice(pos.index, 0, key);
-          this.values.splice(pos.index, 0, value);
-        }
+        this.storage.set(key, value);
       },
       get: function (key) {
-        return this.values[binarySearch(this.keys, key, this.sort).index];
+        return this.storage.get(key);
       }
     };
 
@@ -7729,6 +7732,88 @@
         this.keys = [];
         this.values = [];
       }
+    };
+
+    /**
+     * MongoDB Compatibility Layer
+     */
+    // insertOne is already defined in Collection.prototype, we should not redefine it to call insert
+    // which calls insertOne, creating a loop.
+    // Collection.prototype.insertOne = function (doc) {
+    //   return this.insert(doc);
+    // };
+
+    Collection.prototype.insertMany = function (docs) {
+      return this.insert(docs);
+    };
+
+    Collection.prototype.updateOne = function (filter, update) {
+      var doc = this.findOne(filter);
+      if (!doc) return null;
+
+      // Simple implementation of $set
+      if (update.$set) {
+        for (var key in update.$set) {
+          doc[key] = update.$set[key];
+        }
+      }
+      
+      // Simple implementation of $inc
+      if (update.$inc) {
+        for (var incKey in update.$inc) {
+            if (typeof doc[incKey] !== 'number') doc[incKey] = 0;
+            doc[incKey] += update.$inc[incKey];
+        }
+      }
+
+      this.update(doc);
+      return doc;
+    };
+
+    Collection.prototype.updateMany = function (filter, update) {
+      var docs = this.find(filter);
+      var self = this;
+      
+      docs.forEach(function(doc) {
+          // Simple implementation of $set
+          if (update.$set) {
+            for (var key in update.$set) {
+              doc[key] = update.$set[key];
+            }
+          }
+          
+          // Simple implementation of $inc
+          if (update.$inc) {
+            for (var incKey in update.$inc) {
+                if (typeof doc[incKey] !== 'number') doc[incKey] = 0;
+                doc[incKey] += update.$inc[incKey];
+            }
+          }
+          
+          self.update(doc);
+      });
+      
+      return docs;
+    };
+
+    Collection.prototype.deleteOne = function (filter) {
+      var doc = this.findOne(filter);
+      if (doc) {
+        this.remove(doc);
+        return { deletedCount: 1 };
+      }
+      return { deletedCount: 0 };
+    };
+
+    Collection.prototype.deleteMany = function (filter) {
+      var docs = this.find(filter);
+      var count = docs.length;
+      this.remove(docs);
+      return { deletedCount: count };
+    };
+    
+    Collection.prototype.countDocuments = function (filter) {
+        return this.count(filter);
     };
 
     Loki.deepFreeze = deepFreeze;

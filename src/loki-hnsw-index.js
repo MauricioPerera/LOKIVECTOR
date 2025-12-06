@@ -408,11 +408,11 @@
     // Update entry point if this node has higher level
     if (nodeLevel > this.maxLevel) {
       // Add this node to new upper layers
-      for (var l = this.maxLevel + 1; l <= nodeLevel; l++) {
-        while (this.layers.length <= l) {
+      for (var layerLevel = this.maxLevel + 1; layerLevel <= nodeLevel; layerLevel++) {
+        while (this.layers.length <= layerLevel) {
           this.layers.push(new Map());
         }
-        this.layers[l].set(id, new Set());
+        this.layers[layerLevel].set(id, new Set());
       }
       this.entryPoint = id;
       this.maxLevel = nodeLevel;
@@ -473,10 +473,13 @@
 
       // Remove references from neighbors
       if (neighbors) {
+        var nodeIdToRemove = id;
+        var graphToUpdate = layerGraph;
+        /* jshint -W083 */
         neighbors.forEach(function (neighborId) {
-          var neighborConnections = layerGraph.get(neighborId);
+          var neighborConnections = graphToUpdate.get(neighborId);
           if (neighborConnections) {
-            neighborConnections.delete(id);
+            neighborConnections.delete(nodeIdToRemove);
           }
         });
       }
@@ -566,12 +569,14 @@
     for (var i = 0; i < this.layers.length; i++) {
       var layer = this.layers[i];
       var totalConnections = 0;
+      var currentLayerForStats = layer;
+      /* jshint -W083 */
       layer.forEach(function (neighbors) {
         totalConnections += neighbors.size;
       });
       layerStats.push({
         level: i,
-        nodes: layer.size,
+        nodes: currentLayerForStats.size,
         connections: totalConnections,
         avgConnections: layer.size > 0 ? (totalConnections / layer.size).toFixed(2) : 0
       });
@@ -597,7 +602,9 @@
 
     for (var i = 0; i < this.layers.length; i++) {
       var layerObj = {};
-      this.layers[i].forEach(function (neighbors, nodeId) {
+      var currentLayerForSerialize = this.layers[i];
+      /* jshint -W083 */
+      currentLayerForSerialize.forEach(function (neighbors, nodeId) {
         layerObj[nodeId] = Array.from(neighbors);
       });
       layersData.push(layerObj);
@@ -663,19 +670,19 @@
 
     // Restore vectors
     this.vectors = new Map();
-    for (var id in data.vectors) {
-      if (data.vectors.hasOwnProperty(id)) {
-        var numId = isNaN(id) ? id : parseInt(id, 10);
-        this.vectors.set(numId, data.vectors[id]);
+    for (var vectorId in data.vectors) {
+      if (data.vectors.hasOwnProperty(vectorId)) {
+        var vectorNumId = isNaN(vectorId) ? vectorId : parseInt(vectorId, 10);
+        this.vectors.set(vectorNumId, data.vectors[vectorId]);
       }
     }
 
     // Restore nodeLevel
     this.nodeLevel = new Map();
-    for (var id in data.nodeLevel) {
-      if (data.nodeLevel.hasOwnProperty(id)) {
-        var numId = isNaN(id) ? id : parseInt(id, 10);
-        this.nodeLevel.set(numId, data.nodeLevel[id]);
+    for (var levelId in data.nodeLevel) {
+      if (data.nodeLevel.hasOwnProperty(levelId)) {
+        var levelNumId = isNaN(levelId) ? levelId : parseInt(levelId, 10);
+        this.nodeLevel.set(levelNumId, data.nodeLevel[levelId]);
       }
     }
 

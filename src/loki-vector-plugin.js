@@ -559,16 +559,16 @@
               if (docVal === opVal) return false;
               break;
             case '$gt':
-              if (!(docVal > opVal)) return false;
+              if ((docVal > opVal) === false) return false;
               break;
             case '$gte':
-              if (!(docVal >= opVal)) return false;
+              if ((docVal >= opVal) === false) return false;
               break;
             case '$lt':
-              if (!(docVal < opVal)) return false;
+              if ((docVal < opVal) === false) return false;
               break;
             case '$lte':
-              if (!(docVal <= opVal)) return false;
+              if ((docVal <= opVal) === false) return false;
               break;
             case '$in':
               if (!Array.isArray(opVal) || opVal.indexOf(docVal) === -1) return false;

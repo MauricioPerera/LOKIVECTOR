@@ -74,12 +74,18 @@ module.exports = function (config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['ChromeHeadlessNoSandbox'],
+    // Use Puppeteer as fallback if Chrome is not available
+    browsers: process.env.CHROME_BIN ? ['ChromeHeadlessNoSandbox'] : ['PuppeteerHeadless'],
 
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
         base: 'ChromeHeadless',
         flags: ['--no-sandbox']
+      },
+      PuppeteerHeadless: {
+        base: 'Puppeteer',
+        flags: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: require('puppeteer').executablePath()
       }
     },
 

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  loki-leader:
+    build: .
+    container_name: loki-leader
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - REPLICATION_ROLE=leader
+    volumes:
+      - ./data-leader:/app/data
+
+  loki-follower:
+    build: .
+    container_name: loki-follower
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - REPLICATION_ROLE=follower
+      - LEADER_URL=http://loki-leader:4000
+      - SYNC_INTERVAL=2000
+    depends_on:
+      - loki-leader
+    volumes:
+      - ./data-follower:/app/data
