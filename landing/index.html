@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LokiVector - SQLite for the AI Era</title>
+    <meta name="description" content="Documents + Vector Search + Replication + Ultra Fast. Embeddable or Server Mode.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6366f1;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: #6366f1;
+        }
+        
+        /* Hero */
+        .hero {
+            padding: 5rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+        
+        .hero .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+        
+        .hero .tagline {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #fff;
+            color: #6366f1;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: #6366f1;
+        }
+        
+        /* Features */
+        .features {
+            padding: 5rem 0;
+            background: #f9fafb;
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #1f2937;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        
+        .feature-card p {
+            color: #6b7280;
+        }
+        
+        /* Code Example */
+        .code-example {
+            padding: 5rem 0;
+            background: #1f2937;
+            color: white;
+        }
+        
+        .code-example h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .code-block {
+            background: #111827;
+            padding: 2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        
+        .code-block .keyword { color: #c678dd; }
+        .code-block .string { color: #98c379; }
+        .code-block .function { color: #61afef; }
+        .code-block .comment { color: #5c6370; }
+        
+        /* Comparison */
+        .comparison {
+            padding: 5rem 0;
+            background: white;
+        }
+        
+        .comparison h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        
+        .comparison .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 3rem;
+        }
+        
+        .comparison-table {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .check { color: #10b981; font-weight: bold; }
+        .cross { color: #ef4444; font-weight: bold; }
+        
+        /* Use Cases */
+        .use-cases {
+            padding: 5rem 0;
+            background: #f9fafb;
+        }
+        
+        .use-cases h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #1f2937;
+        }
+        
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .use-case {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .use-case h3 {
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+        
+        .use-case p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+        
+        .beta-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .beta-form input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .beta-form button {
+            padding: 1rem 2rem;
+            background: white;
+            color: #6366f1;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .beta-form button:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Footer */
+        footer {
+            background: #1f2937;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .beta-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="container">
+            <div class="logo">LokiVector</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#comparison">Comparison</a></li>
+                <li><a href="#use-cases">Use Cases</a></li>
+                <li><a href="#docs">Docs</a></li>
+                <li><a href="https://github.com/MauricioPerera/db">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="container">
+            <h1>SQLite for the AI Era</h1>
+            <p class="subtitle">Documents + Vector Search + Replication + Ultra Fast</p>
+            <p class="tagline">Embeddable or Server Mode. Zero Dependencies. Production Ready.</p>
+            <div class="cta-buttons">
+                <a href="#beta" class="btn btn-primary">Join Beta</a>
+                <a href="https://github.com/MauricioPerera/db" class="btn btn-secondary">View on GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Everything You Need</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Vector Search</h3>
+                    <p>HNSW algorithm for efficient approximate nearest neighbor search. Perfect for AI/ML applications, embeddings, and semantic search.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>Document Store</h3>
+                    <p>Full document-oriented database with MongoDB-like API. Store and query JSON documents with ease.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Replication</h3>
+                    <p>Leader-Follower replication for high availability and read scaling. Automatic synchronization with persistent oplog.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Ultra Fast</h3>
+                    <p>In-memory operations with < 1ms latency. MRU cache provides up to 200× speedup for frequent queries.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>TCP Server</h3>
+                    <p>High-performance TCP server for ultra-low latency operations. Perfect for real-time applications.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>Embeddable</h3>
+                    <p>Run as embedded database or standalone server. Works in browser, Node.js, mobile apps, and edge computing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Example -->
+    <section class="code-example">
+        <div class="container">
+            <h2>Get Started in 5 Minutes</h2>
+            <div class="code-block">
+<span class="comment">// Install</span>
+<span class="keyword">npm</span> install lokivector
+
+<span class="comment">// Create collection with vector index</span>
+<span class="keyword">const</span> db = <span class="keyword">new</span> <span class="function">LokiVector</span>(<span class="string">'my-db'</span>);
+<span class="keyword">const</span> items = db.<span class="function">addCollection</span>(<span class="string">'items'</span>);
+
+items.<span class="function">ensureVectorIndex</span>(<span class="string">'embedding'</span>, {
+  distanceFunction: <span class="string">'cosine'</span>
+});
+
+<span class="comment">// Insert documents with vectors</span>
+items.<span class="function">insert</span>({
+  name: <span class="string">'apple'</span>,
+  embedding: [<span class="string">0.9</span>, <span class="string">0.1</span>, <span class="string">0.2</span>]
+});
+
+<span class="comment">// Vector search</span>
+<span class="keyword">const</span> results = items.<span class="function">findNearest</span>(
+  <span class="string">'embedding'</span>,
+  [<span class="string">0.8</span>, <span class="string">0.2</span>, <span class="string">0.1</span>],
+  { k: <span class="string">5</span> }
+);
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="comparison" id="comparison">
+        <div class="container">
+            <h2>Only LokiVector Combines Everything</h2>
+            <p class="subtitle">Documents + Vectors + Replication + Embeddable + TCP Server</p>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>LokiVector</th>
+                            <th>Pinecone</th>
+                            <th>Qdrant</th>
+                            <th>Weaviate</th>
+                            <th>Chroma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vector Search</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td>Document Store</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                        </tr>
+                        <tr>
+                            <td>Replication</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                        </tr>
+                        <tr>
+                            <td>TCP Server</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                        </tr>
+                        <tr>
+                            <td>MRU Cache</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                        </tr>
+                        <tr>
+                            <td>Offline/Embeddable</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="check">✅</span></td>
+                        </tr>
+                        <tr>
+                            <td>Mongo-like API</td>
+                            <td><span class="check">✅</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                            <td><span class="cross">❌</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="use-cases" id="use-cases">
+        <div class="container">
+            <h2>Real-World Use Cases</h2>
+            <div class="use-cases-grid">
+                <div class="use-case">
+                    <h3>🔍 Semantic Search</h3>
+                    <p>Build search engines that understand meaning, not just keywords. Perfect for RAG applications.</p>
+                </div>
+                <div class="use-case">
+                    <h3>🤖 RAG Local</h3>
+                    <p>Run Retrieval Augmented Generation locally without cloud dependencies. Privacy-first AI.</p>
+                </div>
+                <div class="use-case">
+                    <h3>🎯 Recommendations</h3>
+                    <p>Build recommendation engines using vector similarity. Products, content, users - all possible.</p>
+                </div>
+                <div class="use-case">
+                    <h3>📱 Mobile Sync</h3>
+                    <p>Offline-first mobile apps with automatic synchronization. Perfect for Cordova/React Native.</p>
+                </div>
+                <div class="use-case">
+                    <h3>⚡ Redis Replacement</h3>
+                    <p>Replace Redis with documents + vectors + caching. All in one, ultra-fast solution.</p>
+                </div>
+                <div class="use-case">
+                    <h3>🌐 Edge Computing</h3>
+                    <p>Run vector search at the edge. Cloudflare Workers, Deno, Bun - all supported.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="beta">
+        <div class="container">
+            <h2>Join the Beta</h2>
+            <p>Be among the first to try LokiVector. Get early access and help shape the future of embedded databases.</p>
+            <form class="beta-form" id="betaForm" onsubmit="handleBetaSubmit(event)">
+                <input type="email" placeholder="Enter your email" required>
+                <button type="submit">Join Beta</button>
+            </form>
+            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
+                We'll never spam you. Unsubscribe anytime.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#comparison">Comparison</a>
+                <a href="#use-cases">Use Cases</a>
+                <a href="https://github.com/MauricioPerera/db">GitHub</a>
+                <a href="/docs">Documentation</a>
+            </div>
+            <p style="color: #9ca3af; margin-top: 2rem;">
+                © 2025 LokiVector. Open source under MIT License.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        function handleBetaSubmit(event) {
+            event.preventDefault();
+            const email = event.target.querySelector('input[type="email"]').value;
+            
+            // Here you would send to your backend
+            // For now, just show success message
+            alert(`Thanks! We'll notify you at ${email} when LokiVector is ready.`);
+            event.target.reset();
+        }
+    </script>
+</body>
+</html>
+

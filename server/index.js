@@ -5,6 +5,9 @@ const loki = require('../src/lokijs.js');
 const HNSWIndex = require('../src/loki-hnsw-index.js');
 require('../src/loki-vector-plugin.js');
 const LokiOplog = require('../src/loki-oplog.js');
+const APIKeyManager = require('./auth/api-keys.js');
+const { createAuthMiddleware, optionalAuth } = require('./middleware/auth.js');
+const { RateLimiter, createRateLimitMiddleware } = require('./middleware/rate-limit.js');
 
 const fs = require('fs');
 const path = require('path');
@@ -51,6 +54,11 @@ const db = new loki(DB_PATH, {
   autoloadCallback: databaseInitialize
 });
 
+// Replication Configuration (moved before oplog initialization)
+const REPLICATION_ROLE = process.env.REPLICATION_ROLE || 'leader'; // 'leader' or 'follower'
+const LEADER_URL = process.env.LEADER_URL || 'http://localhost:4000';
+const SYNC_INTERVAL = parseInt(process.env.SYNC_INTERVAL) || 5000;
+
 // Initialize Oplog for Leader
 let oplog = null;
 if (REPLICATION_ROLE === 'leader') {
@@ -60,6 +68,41 @@ if (REPLICATION_ROLE === 'leader') {
     retentionDays: 7,
     collectionName: '__oplog__'
   });
+}
+
+// Initialize API Key Manager (new system)
+let apiKeyManager = null;
+let rateLimiter = null;
+let authMiddleware = null;
+let rateLimitMiddleware = null;
+
+// Wrapper functions for backward compatibility (will be set after initialization)
+function authenticate(req, res, next) {
+  if (!authMiddleware) {
+    // If not initialized yet, skip auth (for backward compatibility)
+    return next();
+  }
+  return authMiddleware(req, res, next);
+}
+
+function rateLimit(req, res, next) {
+  if (!rateLimitMiddleware) {
+    // If not initialized yet, skip rate limiting
+    return next();
+  }
+  return rateLimitMiddleware(req, res, next);
+}
+
+function initializeAuth() {
+  try {
+    apiKeyManager = new APIKeyManager(db);
+    rateLimiter = new RateLimiter();
+    authMiddleware = createAuthMiddleware(apiKeyManager);
+    rateLimitMiddleware = createRateLimitMiddleware(rateLimiter);
+    console.log('API Key Manager (new system) initialized');
+  } catch (e) {
+    console.error('Failed to initialize API Key Manager:', e.message);
+  }
 }
 
 // Helper function to setup oplog hooks for a collection
@@ -107,6 +150,11 @@ function _setupCollectionOplogHooks(coll) {
 function databaseInitialize() {
   console.log('Database loaded/initialized');
   
+  // Initialize API Key Manager after database is loaded
+  if (process.env.API_KEYS_ENABLED !== 'false' && !apiKeyManager) {
+    initializeAuth();
+  }
+  
   // Initialize oplog after DB is loaded
   if (REPLICATION_ROLE === 'leader' && oplog && !oplog.collection) {
     oplog._initializeCollection();
@@ -123,11 +171,6 @@ function databaseInitialize() {
     startFollowerSync();
   }
 }
-
-// Replication Configuration
-const REPLICATION_ROLE = process.env.REPLICATION_ROLE || 'leader'; // 'leader' or 'follower'
-const LEADER_URL = process.env.LEADER_URL || 'http://localhost:4000';
-const SYNC_INTERVAL = parseInt(process.env.SYNC_INTERVAL) || 5000;
 
 // Helper to enable changes API on all collections
 function enableChangesApi() {
@@ -197,7 +240,7 @@ app.get('/replication/changes', (req, res) => {
 });
 
 // Get oplog statistics
-app.get('/replication/oplog/stats', (req, res) => {
+app.get('/replication/oplog/stats', optionalAuth(apiKeyManager), (req, res) => {
   if (REPLICATION_ROLE !== 'leader') {
     return res.status(403).json({ error: 'Only leader can serve oplog stats' });
   }
@@ -395,7 +438,7 @@ app.post('/collections', (req, res) => {
 });
 
 // 3. Create Vector Index
-app.post('/collections/:name/index', (req, res) => {
+app.post('/collections/:name/index', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { field, options } = req.body;
   
@@ -411,7 +454,7 @@ app.post('/collections/:name/index', (req, res) => {
 });
 
 // 4. Insert Document(s)
-app.post('/collections/:name/insert', (req, res) => {
+app.post('/collections/:name/insert', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const docs = req.body; // Can be object or array
   
@@ -430,7 +473,7 @@ app.post('/collections/:name/insert', (req, res) => {
 });
 
 // 5. Find Documents (Standard Query)
-app.post('/collections/:name/find', (req, res) => {
+app.post('/collections/:name/find', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { query, limit } = req.body;
   
@@ -447,7 +490,7 @@ app.post('/collections/:name/find', (req, res) => {
 });
 
 // 6. Search (Vector or Hybrid)
-app.post('/collections/:name/search', (req, res) => {
+app.post('/collections/:name/search', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { vector, field, limit, filter } = req.body;
   
@@ -479,7 +522,7 @@ app.post('/collections/:name/search', (req, res) => {
 });
 
 // 7. Update Document(s)
-app.post('/collections/:name/update', (req, res) => {
+app.post('/collections/:name/update', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { query, update } = req.body;
   
@@ -525,7 +568,7 @@ app.post('/collections/:name/update', (req, res) => {
 });
 
 // 8. Remove Document(s)
-app.post('/collections/:name/remove', (req, res) => {
+app.post('/collections/:name/remove', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { query } = req.body;
   
@@ -557,7 +600,7 @@ app.post('/collections/:name/remove', (req, res) => {
 });
 
 // 9. Enable MRU Cache
-app.post('/collections/:name/cache', (req, res) => {
+app.post('/collections/:name/cache', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { capacity } = req.body;
   
@@ -651,7 +694,142 @@ app.delete('/admin/keys/:key', (req, res) => {
     res.json({ message: `API Key '${key}' deleted` });
 });
 
+// API Key Management Endpoints (registered after initialization)
+// Create API key (allow without auth for initial setup)
+app.post('/api/keys', (req, res) => {
+  if (!apiKeyManager) {
+    return res.status(503).json({ error: 'API Key Manager not initialized' });
+  }
+  try {
+    const userId = req.body.userId || req.userId || 'default';
+    const permissions = req.body.permissions || {
+      collections: ['*'],
+      operations: ['read', 'write'],
+      rateLimit: {
+        requests: 1000,
+        window: '1h'
+      }
+    };
+    const metadata = req.body.metadata || {};
+
+    const { id, key } = apiKeyManager.generateKey(userId, permissions, metadata);
+
+    res.status(201).json({
+      id,
+      key, // Return key only once
+      message: 'API key created successfully. Save this key now - it will not be shown again.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// List API keys (require auth)
+app.get('/api/keys', (req, res, next) => {
+  if (!authMiddleware || !rateLimitMiddleware) {
+    return res.status(503).json({ error: 'Authentication not initialized' });
+  }
+  authMiddleware(req, res, () => {
+    rateLimitMiddleware(req, res, next);
+  });
+}, (req, res) => {
+  const userId = req.query.userId || req.userId;
+  const keys = userId 
+    ? apiKeyManager.listKeys(userId)
+    : apiKeyManager.listKeys('*'); // List all if admin
+
+  res.json(keys);
+});
+
+// Revoke API key (require auth)
+app.delete('/api/keys/:keyId', (req, res, next) => {
+  if (!authMiddleware || !rateLimitMiddleware) {
+    return res.status(503).json({ error: 'Authentication not initialized' });
+  }
+  authMiddleware(req, res, () => {
+    rateLimitMiddleware(req, res, next);
+  });
+}, (req, res) => {
+  const { keyId } = req.params;
+  if (apiKeyManager.revokeKey(keyId)) {
+    res.json({ message: 'API key revoked successfully' });
+  } else {
+    res.status(404).json({ error: 'API key not found' });
+  }
+});
+
+// API keys statistics (require auth)
+app.get('/api/keys/stats', (req, res, next) => {
+  if (!authMiddleware || !rateLimitMiddleware) {
+    return res.status(503).json({ error: 'Authentication not initialized' });
+  }
+  authMiddleware(req, res, () => {
+    rateLimitMiddleware(req, res, next);
+  });
+}, (req, res) => {
+  const stats = apiKeyManager.getStats();
+  res.json(stats);
+});
+
+// Health check endpoint (public, no auth required)
+app.get('/health', (req, res) => {
+  const collections = db.listCollections();
+  res.json({
+    status: 'healthy',
+    timestamp: Date.now(),
+    uptime: process.uptime(),
+    version: require('../package.json').version,
+    collections: collections.length,
+    memory: process.memoryUsage()
+  });
+});
+
+// Metrics endpoint (public, no auth required)
+app.get('/metrics', (req, res) => {
+  const collections = db.listCollections();
+  const totalDocs = collections.reduce((sum, coll) => {
+    try {
+      return sum + (coll.count ? coll.count() : 0);
+    } catch (e) {
+      return sum;
+    }
+  }, 0);
+  
+  const metrics = [
+    `# HELP lokivector_collections_total Total number of collections`,
+    `# TYPE lokivector_collections_total gauge`,
+    `lokivector_collections_total ${collections.length}`,
+    ``,
+    `# HELP lokivector_documents_total Total number of documents`,
+    `# TYPE lokivector_documents_total gauge`,
+    `lokivector_documents_total ${totalDocs}`,
+    ``,
+    `# HELP lokivector_uptime_seconds Server uptime in seconds`,
+    `# TYPE lokivector_uptime_seconds gauge`,
+    `lokivector_uptime_seconds ${process.uptime()}`,
+    ``
+  ].join('\n');
+  
+  res.set('Content-Type', 'text/plain');
+  res.send(metrics);
+});
+
 // Start Server
 app.listen(PORT, () => {
-  console.log(`LokiVector Server running on http://localhost:${PORT}`);
+  console.log(`LokiVector HTTP server running on port ${PORT}`);
+  console.log(`Replication role: ${REPLICATION_ROLE || 'none'}`);
+  if (REPLICATION_ROLE === 'follower') {
+    console.log(`Syncing with leader at ${LEADER_URL}`);
+  }
+  if (apiKeyManager) {
+    console.log(`API Key authentication: ENABLED (new system)`);
+    console.log(`Create API key: POST http://localhost:${PORT}/api/keys`);
+  } else {
+    console.log(`API Key authentication: DISABLED (set API_KEYS_ENABLED=false to disable)`);
+  }
+  if (process.env.SAAS_MODE === 'true') {
+    console.log(`SaaS Mode: ENABLED (legacy system)`);
+  }
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Metrics: http://localhost:${PORT}/metrics`);
 });
