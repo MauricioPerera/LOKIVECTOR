@@ -1,246 +1,357 @@
-# LokiJS
+# LokiVector
 
-The super fast in-memory javascript document oriented database.
+**The AI-Era Embedded Database: Document Store + Vector Search with Crash-Tested Durability**
 
-## 📚 Documentation
-
-- **[Full Documentation Index](docs/INDEX.md)** - Complete documentation guide
-- **[Replication Guide](docs/REPLICATION.md)** - Leader-Follower replication
-- **[Vector Search Guide](docs/VECTOR_SEARCH.md)** - HNSW vector similarity search
-- **[MRU Cache Guide](docs/MRU_CACHE.md)** - Query result caching
-- **[TCP Server Guide](docs/TCP_SERVER.md)** - High-performance TCP server
-
-Enable offline-syncing to your SQL/NoSQL database servers with [SyncProxy](https://www.syncproxy.com) !! Code-free real time syncing, ideal for mobile, electron and web apps.
+LokiVector combines the simplicity of a document database with the power of vector search, 
+backed by enterprise-grade durability and crash recovery. Built for modern AI applications 
+that need fast, reliable, and crash-safe data storage.
 
 [![Join the chat at https://gitter.im/techfort/LokiJS](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/techfort/LokiJS?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![alt CI-badge](https://travis-ci.org/techfort/LokiJS.svg?branch=master)
 [![npm version](https://badge.fury.io/js/lokijs.svg)](http://badge.fury.io/js/lokijs)
 [![alt packagequality](http://npm.packagequality.com/shield/lokijs.svg)](http://packagequality.com/#?package=lokijs)
 
-## Overview
+## 🚀 What's New: LokiVector MVP
 
-LokiJS is a document oriented database written in javascript, published under MIT License.
-Its purpose is to store javascript objects as documents in a nosql fashion and retrieve them with a similar mechanism.
-Runs in node (including cordova/phonegap and node-webkit),  [nativescript](http://www.nativescript.org) and the browser.
-LokiJS is ideal for the following scenarios: 
+This fork extends LokiJS with production-ready features for the AI era:
 
-1. client-side in-memory db is ideal (e.g., a session store)
-2. performance critical applications
-3. cordova/phonegap mobile apps where you can leverage the power of javascript and avoid interacting with native databases
-4. data sets loaded into a browser page and synchronised at the end of the work session
-5. node-webkit desktop apps
-6. nativescript mobile apps that mix the power and ubiquity of javascript with native performance and ui
+- ✅ **Vector Search** - HNSW-based similarity search for embeddings
+- ✅ **HTTP Server** - RESTful API with authentication and rate limiting
+- ✅ **Replication** - Leader-Follower replication with persistent oplog
+- ✅ **MRU Cache** - 200× speedup for frequent queries
+- ✅ **API Keys** - Secure API key management
+- ✅ **Dashboard** - Web-based administration dashboard
+- ✅ **CLI** - Command-line interface for server management
+- ✅ **OpenAPI Docs** - Complete API documentation with Swagger UI
 
-LokiJS supports indexing and views and achieves high-performance through maintaining unique and binary indexes (indices) for data.
+## 📚 Documentation
 
-## TCP Server
+### Core Documentation
+- **[Full Documentation Index](docs/INDEX.md)** - Complete documentation guide
+- **[Replication Guide](docs/REPLICATION.md)** - Leader-Follower replication
+- **[Vector Search Guide](docs/VECTOR_SEARCH.md)** - HNSW vector similarity search
+- **[MRU Cache Guide](docs/MRU_CACHE.md)** - Query result caching
+- **[TCP Server Guide](docs/TCP_SERVER.md)** - High-performance TCP server
 
-LokiJS includes a raw TCP server for high-performance, low-latency operations. The server is production-ready and fully tested.
+### MVP Documentation
+- **[Quick Start Guide](GUIA_RAPIDA_MVP.md)** - Get started in 5 minutes
+- **[MVP Architecture](ARQUITECTURA_MVP.md)** - Technical architecture
+- **[Roadmap](ROADMAP_EJECUTABLE.md)** - Product roadmap
+- **[API Documentation](docs/openapi.yaml)** - OpenAPI 3.0 specification
 
-For detailed documentation, see [docs/TCP_SERVER.md](docs/TCP_SERVER.md).
+## 🎯 Quick Start
 
-### Usage
-
-```bash
-# Start the TCP server
-node server/tcp-server.js
-```
-
-### Protocol
-
-The TCP server uses a simple newline-delimited JSON protocol.
-
-**Request:**
-```json
-{
-  "id": 1,
-  "action": "find",
-  "collection": "users",
-  "query": { "age": { "$gt": 25 } }
-}
-```
-
-**Response:**
-```json
-{
-  "id": 1,
-  "result": [...]
-}
-```
-
-**Supported Actions:**
-- `insert`: Insert a document.
-- `find`: Find documents matching a query.
-- `findOne`: Find a single document.
-- `update`: Update a document. Supports finding by query if `$loki` ID is missing.
-- `remove`: Remove documents. Supports removing by query.
-- `count`: Count documents matching a query.
-
-### Note on Update and Remove
-
-For `update` and `remove` actions, if the provided data does not include the `$loki` ID, the server will attempt to find the document using the provided `query`. This ensures that you can update or remove documents based on their properties even if you don't have their internal ID.
-
-## MRU Cache
-
-LokiJS includes an MRU (Most Recently Used) cache to significantly improve query performance for frequent queries. The cache stores the results of `find()` queries and retrieves them instantly when the same query is executed again.
-
-**Performance:** Up to 200x speedup for cached queries (0.16ms → 0.0006ms)
-
-For detailed documentation, see [docs/MRU_CACHE.md](docs/MRU_CACHE.md).
-
-### Usage
-
-The cache is integrated into the `find()` method and works transparently. To enable it, you need to instantiate an `MRUCache` and attach it to your collection.
-
-```javascript
-var MRUCache = require('./src/mru-cache.js');
-var users = db.addCollection('users');
-
-// Enable MRU Cache with a capacity of 100 items
-users.mruCache = new MRUCache(100);
-
-// First query (executes normally and caches result)
-users.find({ age: { $gt: 25 } });
-
-// Second query (retrieves result from cache)
-users.find({ age: { $gt: 25 } });
-```
-
-### HTTP API
-
-You can enable the cache for a collection via the HTTP API:
+### Install
 
 ```bash
-POST /collections/:name/cache
-{
-  "capacity": 100
-}
+npm install lokijs
 ```
 
-### Performance
-
-Benchmarks show significant performance improvements for cached queries:
-
-- **Without Cache**: ~0.16ms - 0.26ms per operation
-- **With Cache**: ~0.0006ms - 0.0008ms per operation
-
-This represents a speedup of over **200x** for frequent queries.
-
-## Vector Search
-
-LokiJS includes full support for vector similarity search using the HNSW (Hierarchical Navigable Small World) algorithm. This enables efficient nearest neighbor search for high-dimensional vectors, ideal for AI/ML applications, embeddings, and semantic search.
-
-**Features:**
-- HNSW algorithm for efficient approximate nearest neighbor search
-- Support for Euclidean and Cosine distance functions
-- Hybrid search (vector + query filters)
-- Automatic index updates
-- Index persistence
-- Nested property support
-
-For detailed documentation, see [docs/VECTOR_SEARCH.md](docs/VECTOR_SEARCH.md).
-
-### Usage
+### Basic Usage
 
 ```javascript
-// Enable vector plugin
-require('loki-vector-plugin');
+const loki = require('lokijs');
+const db = new loki('example.db');
 
-var db = new loki('sandbox.db');
-var items = db.addCollection('items');
+// Add a collection
+const users = db.addCollection('users');
 
-// Create a vector index
-items.ensureVectorIndex("embedding", {
-  M: 16,              // Max connections per node (default: 16)
-  efConstruction: 100, // Exploration factor during construction (default: 200)
-  efSearch: 50,        // Exploration factor during search (default: 50)
-  distanceFunction: 'cosine' // 'euclidean' or 'cosine' (default: 'euclidean')
-});
+// Insert documents
+users.insert({ name: 'John', age: 30 });
+users.insert({ name: 'Jane', age: 25 });
+
+// Query
+const results = users.find({ age: { $gte: 25 } });
+console.log(results);
+```
+
+### Vector Search
+
+```javascript
+const products = db.addCollection('products');
+
+// Create vector index
+products.ensureVectorIndex('embedding', { m: 16, efConstruction: 200 });
 
 // Insert documents with vectors
-items.insert({ name: 'apple', embedding: [1, 0, 0] });
-items.insert({ name: 'banana', embedding: [0, 1, 0] });
+products.insert({ 
+  name: 'Product 1', 
+  embedding: [0.1, 0.2, 0.3, 0.4, 0.5] 
+});
 
-// Find nearest neighbors
-var results = items.findNearest("embedding", [0.9, 0.1, 0], 5);
-// results: [{ name: 'apple', dist: ... }, { name: 'banana', dist: ... }]
+// Search for similar vectors
+const results = products.findNearest('embedding', [0.15, 0.25, 0.35, 0.45, 0.55], 5);
 ```
 
-## LokiVector Server
-
-A lightweight standalone server for vector search is included in `server/`.
-
-### Run with Docker (Recommended)
+### HTTP Server
 
 ```bash
-# Build the image
-docker build -t loki-vector-server .
-
-# Run the server (persisting data to ./docker_data)
-docker run -p 4000:4000 -v $(pwd)/docker_data:/app/data loki-vector-server
-```
-
-### Start Server Locally
-```bash
+# Start the server
 node server/index.js
-# Server runs on port 4000 by default
+
+# Create an API key
+curl -X POST http://localhost:4000/api/keys \
+  -H "Content-Type: application/json" \
+  -d '{"metadata":{"name":"My Key"}}'
+
+# Use the API
+curl -H "X-API-Key: YOUR_KEY" http://localhost:4000/collections
 ```
 
-### API Endpoints
+### Dashboard
 
-- **GET /**: Server status
-- **POST /collections**: Create collection
-  - Body: `{ "name": "items" }`
-- **POST /collections/:name/index**: Create vector index
-  - Body: `{ "field": "vector", "options": { "M": 16, "efConstruction": 100 } }`
-- **POST /collections/:name/insert**: Insert documents
-  - Body: `[{ "name": "doc1", "vector": [...] }]`
-- **POST /collections/:name/search**: Search
-  - Body: `{ "field": "vector", "vector": [...], "limit": 10 }`
-- **POST /collections/:name/cache**: Enable MRU Cache
-  - Body: `{ "capacity": 100 }`
+Access the web dashboard at:
+```
+http://localhost:4000/dashboard
+```
 
-### Replication and Clustering
-
-LokiJS supports a Leader-Follower replication model for high availability and read scaling.
-
-#### Run Cluster with Docker Compose
+### CLI
 
 ```bash
-# Start a Leader-Follower cluster
-docker compose up -d --build
+# Install CLI globally
+npm install -g lokijs
 
-# Leader runs on port 4000
-# Follower runs on port 4001
+# Initialize project
+loki-vector init
+
+# Start server
+loki-vector start
+
+# Create API key
+loki-vector key create
+
+# List collections
+loki-vector collections list
 ```
 
-#### Environment Variables
+## 🛡️ Durability & Crash Recovery
 
-- `PORT`: Server port (default: 4000)
-- `REPLICATION_ROLE`: `leader` or `follower` (default: `leader`)
-- `LEADER_URL`: URL of the leader server (required for followers, e.g., `http://leader:4000`)
-- `SYNC_INTERVAL`: Sync interval in ms for followers (default: 5000)
+LokiVector is **crash-safe** and validated with comprehensive end-to-end tests. 
+We test crash recovery across documents, collections, vector indexes, and replication 
+with automated end-to-end tests.
 
-## KeyValueStore Optimization
+### What We Guarantee
 
-The KeyValueStore implementation has been optimized to use a `Map` (O(1)) instead of binary search (O(log n)). This significantly improves performance for large datasets.
+✅ **Complete Data Recovery** - All documents recover after crashes  
+✅ **Vector Index Integrity** - HNSW indexes rebuild correctly  
+✅ **Oplog Consistency** - Replication logs maintain consistency  
+✅ **Partial Write Safety** - No corruption from interrupted operations  
+✅ **Idempotent Operations** - Safe to retry after failures  
+✅ **Stress Tested** - Validated through multiple sequential crashes  
 
-- **Previous Implementation**: Binary search on a sorted array.
-- **New Implementation**: Javascript `Map` object.
-- **Performance Gain**: Constant time complexity for `get` and `set` operations.
+### How It Works
 
-## MongoDB Compatibility
+LokiVector uses a combination of:
+- **Journal-based persistence** - All changes logged before commit
+- **Automatic recovery** - Validates and repairs on startup
+- **Index reconstruction** - Vector indexes rebuild if needed
+- **Oplog consistency** - Replication state maintained across crashes
 
-LokiJS now includes a compatibility layer for MongoDB-style CRUD operations.
+See [Durability Documentation](docs/DURABILITY.md) for technical details.
 
-- `insertOne(doc)`
-- `insertMany(docs)`
-- `updateOne(filter, update)`
-- `updateMany(filter, update)`
-- `deleteOne(filter)`
-- `deleteMany(filter)`
-- `countDocuments(filter)`
+### Test Coverage
 
-Supported update operators:
-- `$set`: Sets the value of a field.
-- `$inc`: Increments the value of a field.
+Our crash recovery suite includes:
+- 7 comprehensive E2E test scenarios
+- Document recovery validation
+- Vector index recovery validation
+- Replication consistency checks
+- Partial write handling
+- Idempotency verification
+- Stress tests with multiple sequential crashes
+
+**Result:** 0 data loss, 0 corruption, 100% recovery rate in all tested scenarios.
+
+---
+
+## 📊 Features
+
+### Core Features
+- **Document Store** - Fast in-memory document database
+- **Indexing** - Unique and binary indexes for high performance
+- **Views** - Dynamic views with filters and sorting
+- **Persistence** - Multiple adapters (IndexedDB, File System, Memory)
+- **Query API** - MongoDB-like query syntax
+
+### Advanced Features
+- **Vector Search** - HNSW algorithm for approximate nearest neighbor search
+- **Replication** - Leader-Follower replication with oplog
+- **MRU Cache** - Most Recently Used cache for query results
+- **HTTP Server** - RESTful API with Express.js
+- **TCP Server** - High-performance raw TCP server
+- **Authentication** - API key-based authentication
+- **Rate Limiting** - Configurable rate limits per API key
+- **Dashboard** - Web-based administration interface
+- **CLI** - Command-line interface
+- **OpenAPI** - Complete API documentation
+
+## 🏗️ Architecture
+
+### Components
+
+```
+LokiJS Core
+├── Document Store
+├── Indexing System
+├── Persistence Adapters
+└── Query Engine
+
+LokiVector Extensions
+├── Vector Search (HNSW)
+├── Replication (Leader-Follower)
+├── MRU Cache
+├── HTTP Server
+├── TCP Server
+├── Authentication (API Keys)
+├── Rate Limiting
+├── Dashboard
+└── CLI
+```
+
+## 📈 Performance
+
+- **Query Speed**: < 1ms for indexed queries
+- **Vector Search**: < 0.5ms per search (HNSW)
+- **MRU Cache**: 200× speedup for cached queries
+- **TCP Server**: < 1ms latency
+- **Memory**: Efficient in-memory storage
+
+## 🧪 Testing
+
+```bash
+# Run unit tests
+npm run test:node
+
+# Run browser tests
+npm run test:browser
+
+# Run E2E tests (requires server running)
+npm run test:e2e
+
+# Run all tests
+npm test
+```
+
+## 📦 Installation
+
+### NPM
+
+```bash
+npm install lokijs
+```
+
+### Browser
+
+```html
+<script src="lokijs.min.js"></script>
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+```bash
+# Server port
+PORT=4000
+
+# Replication role
+REPLICATION_ROLE=leader  # or 'follower'
+
+# Leader URL (for followers)
+LEADER_URL=http://localhost:4000
+
+# Sync interval (for followers)
+SYNC_INTERVAL=5000
+
+# Database file
+DB_FILE=data/loki-vector.db
+```
+
+## 📝 Examples
+
+See the `examples/` directory for:
+- Basic usage examples
+- Vector search examples
+- TCP server examples
+- Replication examples
+- HTTP API examples
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our contributing guidelines and submit pull requests.
+
+## 📜 License & Editions
+
+LokiVector is available in three editions:
+
+### 🆓 Community Edition (MIT License)
+**Free and open source** - Perfect for development, prototyping, and open source projects.
+
+**Includes:**
+- Core document store
+- Vector search (HNSW)
+- HTTP/TCP server
+- Crash recovery & durability
+- API keys & basic rate limiting
+- Community support
+
+### 💼 Pro Edition (Commercial License)
+**For production applications** - Includes replication, advanced caching, dashboard, and business support.
+
+**Adds:**
+- Leader-follower replication
+- Advanced MRU cache
+- Web dashboard
+- Enhanced rate limiting
+- Deployment templates
+- Business hours support
+
+### 🏢 Enterprise Edition (Commercial License)
+**For mission-critical systems** - Multi-tenancy, SSO/SAML, RBAC, audit logs, and 24/7 support.
+
+**Adds:**
+- Multi-tenant support
+- SSO/SAML integration
+- Fine-grained RBAC
+- Audit logging
+- Automated backups
+- 24/7 support & SLA
+
+See [Editions Comparison](EDITIONS.md) for detailed feature comparison.
+
+**Commercial Licensing:** Contact us at commercial@lokivector.io
+
+---
+
+## 📄 License
+
+### Open Source (MIT)
+Community Edition features are licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+### Commercial License
+Commercial features require a Commercial License. See [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) for terms.
+
+### Feature Mapping
+See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for a complete mapping of which features are MIT vs Commercial.
+
+### Trademark
+"LokiVector" is a trademark. See [TRADEMARK_POLICY.md](TRADEMARK_POLICY.md) for usage guidelines.
+
+## 🙏 Acknowledgments
+
+- Original LokiJS by Joe Minichino and contributors
+- HNSW algorithm implementation
+- Express.js for HTTP server
+- All contributors and users
+
+## 🔗 Links
+
+- **GitHub**: https://github.com/MauricioPerera/db
+- **Documentation**: See `docs/` directory
+- **Issues**: GitHub Issues
+- **Chat**: Gitter
+
+---
+
+**LokiJS** - Fast, flexible, and powerful document database  
+**LokiVector** - Production-ready extensions for the AI era

@@ -1,0 +1,1063 @@
+openapi: 3.0.3
+info:
+  title: LokiVector API
+  description: |
+    LokiVector - AI-Era Embedded Database API
+    
+    A high-performance, in-memory document database with vector search capabilities.
+    Built on LokiJS with HNSW (Hierarchical Navigable Small World) indexing for fast similarity search.
+    
+    ## Authentication
+    
+    All endpoints (except public ones) require an API key. Include it in one of these ways:
+    - Header: `X-API-Key: lvk_...`
+    - Header: `Authorization: Bearer lvk_...`
+    - Query: `?apiKey=lvk_...`
+    
+    ## Rate Limiting
+    
+    Rate limits are configured per API key. Check response headers:
+    - `X-RateLimit-Limit`: Maximum requests per window
+    - `X-RateLimit-Remaining`: Remaining requests
+    - `X-RateLimit-Reset`: Unix timestamp when limit resets
+    
+  version: 0.1.0
+  contact:
+    name: LokiVector Support
+    url: https://github.com/MauricioPerera/db
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:4000
+    description: Local development server
+  - url: https://api.lokivector.com
+    description: Production server (example)
+
+tags:
+  - name: Health
+    description: Health check and status endpoints
+  - name: Collections
+    description: Collection management operations
+  - name: Documents
+    description: Document CRUD operations
+  - name: Vector Search
+    description: Vector similarity search operations
+  - name: Replication
+    description: Database replication endpoints (leader only)
+  - name: API Keys
+    description: API key management
+  - name: Admin
+    description: Administrative endpoints
+
+paths:
+  /:
+    get:
+      tags:
+        - Health
+      summary: Get server status
+      description: Returns basic server information and list of collections
+      operationId: getServerStatus
+      responses:
+        '200':
+          description: Server status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: online
+                  engine:
+                    type: string
+                    example: LokiJS + HNSW
+                  role:
+                    type: string
+                    enum: [leader, follower, none]
+                    example: leader
+                  collections:
+                    type: array
+                    items:
+                      type: string
+                    example: [users, products, embeddings]
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns detailed health information about the server
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: integer
+                    format: int64
+                    example: 1701878400000
+                  uptime:
+                    type: number
+                    description: Server uptime in seconds
+                    example: 3600.5
+                  collections:
+                    type: integer
+                    example: 5
+                  memory:
+                    $ref: '#/components/schemas/MemoryUsage'
+
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Prometheus metrics
+      description: Returns metrics in Prometheus format
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP lokivector_collections_total Total number of collections
+                  # TYPE lokivector_collections_total gauge
+                  lokivector_collections_total 5
+
+  /collections:
+    get:
+      tags:
+        - Collections
+      summary: List all collections
+      description: Returns metadata for all collections including document count, size, and vector index status
+      operationId: listCollections
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of collections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    post:
+      tags:
+        - Collections
+      summary: Create a new collection
+      description: Creates a new collection with optional configuration
+      operationId: createCollection
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Collection name
+                  example: products
+                options:
+                  type: object
+                  description: Collection options (LokiJS collection options)
+                  properties:
+                    unique:
+                      type: array
+                      items:
+                        type: string
+                      example: [id, email]
+                    indices:
+                      type: array
+                      items:
+                        type: string
+                      example: [category, createdAt]
+      responses:
+        '200':
+          description: Collection created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Collection 'products' created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Collection already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/index:
+    post:
+      tags:
+        - Vector Search
+      summary: Create vector index
+      description: Creates a vector index on a specific field for similarity search
+      operationId: createVectorIndex
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - field
+              properties:
+                field:
+                  type: string
+                  description: Field name to index (must contain vector arrays)
+                  example: embedding
+                options:
+                  type: object
+                  description: HNSW index options
+                  properties:
+                    m:
+                      type: integer
+                      description: Number of bi-directional links for each element
+                      default: 16
+                    efConstruction:
+                      type: integer
+                      description: Size of the dynamic candidate list
+                      default: 200
+                    efSearch:
+                      type: integer
+                      description: Size of the dynamic candidate list during search
+                      default: 50
+      responses:
+        '200':
+          description: Vector index created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Vector index created on field 'embedding'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/insert:
+    post:
+      tags:
+        - Documents
+      summary: Insert document(s)
+      description: Inserts one or more documents into a collection
+      operationId: insertDocuments
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/Document'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/Document'
+            examples:
+              single:
+                summary: Single document
+                value:
+                  name: "Product 1"
+                  price: 29.99
+                  category: "electronics"
+              multiple:
+                summary: Multiple documents
+                value:
+                  - name: "Product 1"
+                    price: 29.99
+                  - name: "Product 2"
+                    price: 39.99
+      responses:
+        '200':
+          description: Documents inserted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Inserted successfully
+                  count:
+                    type: integer
+                    example: 2
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/find:
+    post:
+      tags:
+        - Documents
+      summary: Find documents
+      description: Query documents using LokiJS query syntax
+      operationId: findDocuments
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: object
+                  description: LokiJS query object
+                  example:
+                    category: electronics
+                    price:
+                      $gte: 10
+                      $lte: 100
+                limit:
+                  type: integer
+                  description: Maximum number of results
+                  example: 10
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/search:
+    post:
+      tags:
+        - Vector Search
+      summary: Vector similarity search
+      description: Performs vector similarity search or hybrid search (vector + filter)
+      operationId: vectorSearch
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - vector
+              properties:
+                vector:
+                  type: array
+                  items:
+                    type: number
+                  description: Query vector (must match indexed field dimensions)
+                  example: [0.1, 0.2, 0.3, 0.4, 0.5]
+                field:
+                  type: string
+                  description: Vector field name (default: first indexed field)
+                  example: embedding
+                k:
+                  type: integer
+                  description: Number of nearest neighbors to return
+                  default: 10
+                  example: 5
+                filter:
+                  type: object
+                  description: Optional filter query (LokiJS syntax)
+                  example:
+                    category: electronics
+                hybrid:
+                  type: boolean
+                  description: Enable hybrid search (combine vector similarity with filter)
+                  default: false
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Document'
+                    - type: object
+                      properties:
+                        _distance:
+                          type: number
+                          description: Distance/similarity score
+                          example: 0.85
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/update:
+    post:
+      tags:
+        - Documents
+      summary: Update document(s)
+      description: Updates one or more documents matching a query
+      operationId: updateDocuments
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+                - update
+              properties:
+                query:
+                  type: object
+                  description: Query to find documents to update
+                  example:
+                    category: electronics
+                update:
+                  type: object
+                  description: Update operations (LokiJS update syntax)
+                  example:
+                    $set:
+                      price: 29.99
+                      updatedAt: "2024-01-01T00:00:00Z"
+      responses:
+        '200':
+          description: Documents updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Updated 5 documents
+                  count:
+                    type: integer
+                    example: 5
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/remove:
+    post:
+      tags:
+        - Documents
+      summary: Remove document(s)
+      description: Removes one or more documents matching a query
+      operationId: removeDocuments
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: object
+                  description: Query to find documents to remove
+                  example:
+                    category: deprecated
+      responses:
+        '200':
+          description: Documents removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Removed 3 documents
+                  count:
+                    type: integer
+                    example: 3
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /collections/{name}/cache:
+    post:
+      tags:
+        - Collections
+      summary: Enable MRU cache
+      description: Enables Most Recently Used cache for a collection to improve query performance
+      operationId: enableCache
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionName'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                capacity:
+                  type: integer
+                  description: Cache capacity (number of entries)
+                  default: 100
+                  example: 500
+      responses:
+        '200':
+          description: Cache enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: MRU cache enabled with capacity 500
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/keys:
+    post:
+      tags:
+        - API Keys
+      summary: Create API key
+      description: Creates a new API key. The key is returned only once - save it immediately.
+      operationId: createAPIKey
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: User ID for the key
+                  default: default
+                  example: user123
+                permissions:
+                  type: object
+                  description: Key permissions
+                  properties:
+                    collections:
+                      oneOf:
+                        - type: string
+                          enum: ['*']
+                        - type: array
+                          items:
+                            type: string
+                      description: Allowed collections (* for all)
+                      example: "*"
+                    operations:
+                      oneOf:
+                        - type: string
+                          enum: ['*']
+                        - type: array
+                          items:
+                            type: string
+                            enum: [read, write, admin]
+                      description: Allowed operations
+                      example: ["read", "write"]
+                    rateLimit:
+                      type: object
+                      properties:
+                        requests:
+                          type: integer
+                          description: Number of requests per window
+                          example: 1000
+                        window:
+                          type: string
+                          description: Time window (e.g., "1h", "24h", "7d")
+                          example: "1h"
+                metadata:
+                  type: object
+                  description: Additional metadata (e.g., name, description)
+                  example:
+                    name: "Production API Key"
+                    description: "Key for production environment"
+      responses:
+        '201':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: key_abc123...
+                  key:
+                    type: string
+                    description: The API key (shown only once)
+                    example: lvk_abc123def456...
+                  message:
+                    type: string
+                    example: API key created successfully. Save this key now - it will not be shown again.
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - API Keys
+      summary: List API keys
+      description: Lists all API keys (requires authentication)
+      operationId: listAPIKeys
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: userId
+          in: query
+          description: Filter by user ID
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/APIKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/keys/{keyId}:
+    delete:
+      tags:
+        - API Keys
+      summary: Revoke API key
+      description: Revokes an API key, preventing further use
+      operationId: revokeAPIKey
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          description: API key ID
+          schema:
+            type: string
+            example: key_abc123...
+      responses:
+        '200':
+          description: API key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: API key revoked successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/keys/stats:
+    get:
+      tags:
+        - API Keys
+      summary: Get API key statistics
+      description: Returns statistics about API keys
+      operationId: getAPIKeyStats
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: API key statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalKeys:
+                    type: integer
+                    example: 10
+                  activeKeys:
+                    type: integer
+                    example: 8
+                  revokedKeys:
+                    type: integer
+                    example: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /replication/changes:
+    get:
+      tags:
+        - Replication
+      summary: Get replication changes
+      description: Returns changes since a specific sequence (leader only)
+      operationId: getReplicationChanges
+      parameters:
+        - name: since
+          in: query
+          description: Sequence number to start from
+          required: false
+          schema:
+            type: integer
+            default: 0
+            example: 100
+        - name: limit
+          in: query
+          description: Maximum number of changes to return
+          required: false
+          schema:
+            type: integer
+            default: 1000
+            example: 100
+      responses:
+        '200':
+          description: Replication changes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changes:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ReplicationChange'
+                  latestSequence:
+                    type: integer
+                    example: 150
+                  count:
+                    type: integer
+                    example: 50
+        '403':
+          description: Not a leader node
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /replication/oplog/stats:
+    get:
+      tags:
+        - Replication
+      summary: Get oplog statistics
+      description: Returns statistics about the operation log (leader only)
+      operationId: getOplogStats
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Oplog statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalEntries:
+                    type: integer
+                    example: 1000
+                  latestSequence:
+                    type: integer
+                    example: 1000
+                  oldestSequence:
+                    type: integer
+                    example: 1
+        '403':
+          description: Not a leader node
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  parameters:
+    CollectionName:
+      name: name
+      in: path
+      required: true
+      description: Collection name
+      schema:
+        type: string
+        example: products
+
+  schemas:
+    Document:
+      type: object
+      description: A document in the database
+      additionalProperties: true
+      properties:
+        $loki:
+          type: integer
+          description: Internal document ID
+        meta:
+          type: object
+          description: Document metadata
+          properties:
+            revision:
+              type: integer
+            created:
+              type: integer
+              format: int64
+            version:
+              type: integer
+      example:
+        $loki: 1
+        meta:
+          revision: 0
+          created: 1701878400000
+          version: 0
+        name: "Product 1"
+        price: 29.99
+        category: "electronics"
+        embedding: [0.1, 0.2, 0.3, 0.4, 0.5]
+
+    CollectionMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+          example: products
+        count:
+          type: integer
+          description: Number of documents
+          example: 1000
+        size:
+          type: integer
+          description: Estimated size in bytes
+          example: 1024000
+        hasVectorIndex:
+          type: boolean
+          description: Whether collection has a vector index
+          example: true
+
+    APIKey:
+      type: object
+      properties:
+        keyId:
+          type: string
+          example: key_abc123...
+        userId:
+          type: string
+          example: user123
+        permissions:
+          type: object
+          properties:
+            collections:
+              oneOf:
+                - type: string
+                  enum: ['*']
+                - type: array
+                  items:
+                    type: string
+            operations:
+              oneOf:
+                - type: string
+                  enum: ['*']
+                - type: array
+                  items:
+                    type: string
+            rateLimit:
+              type: object
+              properties:
+                requests:
+                  type: integer
+                window:
+                  type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: integer
+          format: int64
+          example: 1701878400000
+        expiresAt:
+          type: integer
+          format: int64
+          nullable: true
+          example: 1733414400000
+        revoked:
+          type: boolean
+          example: false
+
+    ReplicationChange:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [insert, update, remove]
+        obj:
+          $ref: '#/components/schemas/Document'
+        sequence:
+          type: integer
+          example: 101
+        timestamp:
+          type: integer
+          format: int64
+          example: 1701878400000
+
+    MemoryUsage:
+      type: object
+      properties:
+        rss:
+          type: integer
+          description: Resident Set Size
+        heapTotal:
+          type: integer
+        heapUsed:
+          type: integer
+        external:
+          type: integer
+        arrayBuffers:
+          type: integer
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: Collection not found
+        message:
+          type: string
+          description: Detailed error message
+          example: The collection 'products' does not exist
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized - Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            example:
+              error: API key required
+              message: Please provide an API key in X-API-Key header, Authorization header, or apiKey query parameter
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Maximum requests per window
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Remaining requests
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+              description: Unix timestamp when limit resets
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+

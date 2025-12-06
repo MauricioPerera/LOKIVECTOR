@@ -1,106 +1,116 @@
 # Changelog
 
-* add IncrementalIndexedDBAdapter
-* make ensureIndex faster
-* LokiEventEmitter.emit faster
-* make batch inserts faster (add option to overrideAdaptiveIndices)
+All notable changes to LokiVector will be documented in this file.
 
-## 1.5.6
-* added support for indexes on nested properties (#718)
-* more robust environment detection (#717)
-* precompile $regex filters recursively (#710)
-* Corrected $aeq example in Query Examples (#706)
-* change 'shallow-recurse-objects' clone to support deep array clone (#692)
-* jsdoc fixes for compoundsort example (#691)
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.5.5
-* fixed issue where batch removes did not update unique index (#677)
+---
 
-## 1.5.4
-* fixes to checkIndex maintenance fn (#654, #661)
-* bulk remove optimizations (#663)
-* fix to meta when cloning (#666)
-* AWS S3 sync adapter added (#670)
-* fix for browser project: fs not found (#674)
-* added comparators to default export (#672)
+## [0.1.0] - 2025-12-06
 
-## 1.5.3
-* simplesort can leverage binary index (via index intersect) when weakly filtered (#645)
-* the simplesort 'descending' param is now multipurposed (with bw-compat) see jsdocs
-* added new simplified js comparison ops for unindexed optimizations (commit bb011d)
-* added collection.checkIndex() and collection.checkIndexes() for diagnostics (#654,#47)
+### 🎉 Initial Public Release
 
-## 1.5.2
-* fixed error when transform steps have non-serializable parameters (#624)
-* addCollection will return existing collection when collection named already exists (#635)
-* batch updates when not cloning no longer risk invalidating adaptive binary indices (#639)
-* fixed autosave race condition when using async adapter (#643)
-* collection option added to disableMeta if not using changes api or ttl (#644)
+#### Added
 
-## 1.5.1
-* added disableDeltaChangesApi (default:true) collection option to store only differences. (#582)
-* loki indexed adapter deleteDatabase method will now wait until complete before callback (#584)
-* fixed clone methods correctly assigning object prototypes (#586)
-* partitioning adapter and memory adapter no longer throw error when database doesn't exist (yet)
-* simplesort and compoundsort now support sorting on nested properties via dot-notation (#574)
-* added support for binary indices on nested properties (#574)
-* fixed jsdoc syntax error causing vscode to crash (#614)
-* fixed error when using partitioning adapter with nativescript adapter (#615)
-* added optional 'dataOptions' to eqJoin and map (chain/transform) (see #618)
+**Core Database**
+- Document store with JSON-like documents
+- Flexible schema, no migrations needed
+- In-memory performance with disk persistence
+- Binary and unique indexes
+- Dynamic views
+- MongoDB-like query syntax
 
-## 1.5.0
-* refactored binary indices sorting order
-* date values in properties with binary index will be converted to epoch time
-* fix to LokiFsStructuredAdapter first time autoload error where file doesn't exist yet
-* fixed simplesort descending with binary indices and no filters
-* with 'clone' option collection 'insert' events no longer emit internal obj reference
-* fix to clone method 'shallow'
-* added 'removeMeta' option to chained data calls to shallow clone and remove $loki and meta
-* added quickstart examples for node and updated loki sandbox with online web quickstarts
-* fixes to async unit tests
-* npm release trimmed from 5 megs to 500k (no examples, jsdocs, tests)
+**Vector Search**
+- HNSW (Hierarchical Navigable Small World) index
+- Approximate nearest neighbor search
+- Support for multiple distance metrics (Euclidean, Cosine, Inner Product)
+- Semantic search capabilities
+- Vector index creation and management
 
-## 1.4.3
-* added throttled saves and loads (enabled by default) to ensure no overlapping calls
-* unfiltered simplesorts can leverage binary index
-* collection.clear now clears indices correctly
-* fix to LokiPartitioning adapter resetting maxId across saves
-* meta set correctly on batch inserts
-* LokiMemoryAdapter now configurable to simulate async
-* fix changesApi not enabled after loading database
+**Server & API**
+- HTTP REST API with Express.js
+- Raw TCP server for low-latency operations
+- API key authentication system
+- Configurable rate limiting per API key
+- Health check endpoint
+- Metrics endpoint
 
-## 1.4.2
-* added 'adaptiveBinaryIndices' option to collections (default true) to avoid rebuilds on inserts/updates/removes
-* added higher performance LokiFsStructuredAdapter for node
-* added destructured serialization methods for partitioning and exporting
-* added 'addListener' method alias of 'on' method
-* LokiFsAdapter doesn't throw exception when file doesn't exist (yet)
-* fix for circular structure error when setting ttl
-* fix unit testing on windows
-* experimental implementation of an incremental adapter
+**Replication** (Commercial)
+- Leader-Follower replication
+- Persistent oplog
+- Automatic synchronization
+- Read scaling support
 
-## 1.4.1
-* minor fixes
-* updated jsdoc coverage
+**Durability & Crash Recovery**
+- Crash-safe with validated recovery
+- Journal-based persistence
+- Automatic data recovery
+- Vector index recovery
+- Oplog consistency
+- Comprehensive E2E crash recovery tests (7 scenarios)
+- 0 data loss, 0 corruption guarantee
 
-## 1.4.0
-* fixes to loki indexed adapter
-* added nativescript adapter
-* added $aeq, $contains, $containsAny, $ne
-* fix unique index update with new object
-* expose persistence adapters to module export
-* fix to loki-crypted-file-adapter
+**Developer Tools**
+- CLI (loki-vector) for server management
+- Web-based admin dashboard
+- OpenAPI 3.0 documentation with Swagger UI
+- Comprehensive examples and guides
 
-## 1.3.0
+**Documentation**
+- Complete technical documentation
+- Durability & Crash Recovery guide
+- Deployment guide (Docker, Kubernetes, Nginx)
+- Replication guide
+- Vector search guide
+- API documentation (OpenAPI)
 
-* UniqueIndex and `by()` method
-* staging API
-* count() utility method
-* RethinkDB-style joins (eqJoin)
-* moved testing to Karma
-* moved builds and run to npm instead of gulp
-* added $containsAny operator
-* statistical functions: average, max, maxRecord, min, minRecord, median, mode
-* extract() to extract a flat array of values for one field in each record
-* extractNumerical() - same as extract() for numerical values
-* pre-insert and pre-update events
+**Legal & Licensing**
+- MIT License for Community Edition
+- Commercial License for Pro/Enterprise
+- Complete feature mapping (MIT vs Commercial)
+- Trademark policy
+- Legal compliance checklist
+
+#### Security
+- API key management with secure hashing
+- Rate limiting per API key
+- Authentication middleware
+- Input validation
+
+#### Performance
+- MRU cache for query results (200× speedup)
+- Optimized vector search (HNSW algorithm)
+- Efficient in-memory storage
+- Low-latency TCP server
+
+#### Testing
+- Comprehensive unit tests
+- Integration tests
+- E2E tests for HTTP server
+- **Crash recovery E2E tests (7 scenarios)**
+- Test helpers for crash simulation
+- Database save validation helpers
+
+---
+
+## [Unreleased]
+
+### Planned
+- Graph database capabilities
+- Additional vector distance metrics
+- Performance optimizations
+- Enhanced monitoring
+- Multi-tenant support (Enterprise)
+- SSO/SAML integration (Enterprise)
+- Advanced RBAC (Enterprise)
+
+---
+
+## Version History
+
+- **0.1.0** (2025-12-06) - Initial public release with crash-tested durability
+
+---
+
+**For detailed release notes, see:** [GitHub Releases](https://github.com/MauricioPerera/db/releases)

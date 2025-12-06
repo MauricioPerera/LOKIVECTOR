@@ -1,3 +1,19 @@
+/**
+ * LokiVector Commercial Module - Proprietary License
+ * 
+ * Copyright (c) 2025 LokiVector Contributors
+ * 
+ * This file is part of LokiVector Commercial Edition.
+ * Unauthorized copying, hosting, or redistribution is prohibited.
+ * 
+ * This software is licensed under the LokiVector Commercial License.
+ * See LICENSE-COMMERCIAL.md for terms.
+ * 
+ * For licensing inquiries: commercial@lokivector.io
+ * 
+ * All rights reserved.
+ */
+
 // Simple In-Memory Key Store for MVP
 // In production, this should be a separate DB (Redis/Mongo)
 const apiKeys = new Map();

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LokiVector Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .api-key-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .api-key-input {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .api-key-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #4f46e5;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            margin-bottom: 1rem;
+            color: #1f2937;
+            font-size: 1.25rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 2rem;
+            color: #9ca3af;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6366f1;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .log-entry {
+            padding: 0.5rem;
+            border-left: 3px solid #6366f1;
+            margin-bottom: 0.5rem;
+            background: #f9fafb;
+        }
+        
+        .log-time {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LokiVector Dashboard</h1>
+            <p class="subtitle">AI-Era Embedded Database Management</p>
+        </header>
+
+        <!-- API Key Section -->
+        <div class="api-key-section">
+            <h2>API Key</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                Enter your API key to access the dashboard
+            </p>
+            <div class="api-key-input">
+                <input type="password" id="apiKeyInput" placeholder="lvk_..." />
+                <button class="btn" onclick="setAPIKey()">Connect</button>
+            </div>
+            <div id="apiKeyStatus" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats" id="statsSection" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="statCollections">0</div>
+                <div class="stat-label">Collections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statDocuments">0</div>
+                <div class="stat-label">Documents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statVectors">0</div>
+                <div class="stat-label">Vectors</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statStorage">0 B</div>
+                <div class="stat-label">Storage Used</div>
+            </div>
+        </div>
+
+        <!-- Collections Table -->
+        <div class="section" id="collectionsSection" style="display: none;">
+            <h2>Collections</h2>
+            <div id="collectionsLoading" class="loading">Loading collections...</div>
+            <div id="collectionsError" class="error" style="display: none;"></div>
+            <table id="collectionsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Documents</th>
+                        <th>Vectors</th>
+                        <th>Size</th>
+                        <th>Vector Index</th>
+                    </tr>
+                </thead>
+                <tbody id="collectionsBody">
+                </tbody>
+            </table>
+            <div id="collectionsEmpty" class="empty" style="display: none;">
+                No collections found
+            </div>
+        </div>
+
+        <!-- API Keys Table -->
+        <div class="section" id="keysSection" style="display: none;">
+            <h2>API Keys</h2>
+            <div style="margin-bottom: 1rem;">
+                <button class="btn" onclick="createAPIKey()">Create New Key</button>
+            </div>
+            <div id="keysLoading" class="loading">Loading API keys...</div>
+            <div id="keysError" class="error" style="display: none;"></div>
+            <table id="keysTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>User</th>
+                        <th>Created</th>
+                        <th>Last Used</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="keysBody">
+                </tbody>
+            </table>
+            <div id="keysEmpty" class="empty" style="display: none;">
+                No API keys found
+            </div>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="section" id="logsSection" style="display: none;">
+            <h2>Recent Logs</h2>
+            <div id="logsLoading" class="loading">Loading logs...</div>
+            <div id="logsError" class="error" style="display: none;"></div>
+            <div id="logsContainer" style="display: none;">
+                <!-- Logs will be inserted here -->
+            </div>
+            <div id="logsEmpty" class="empty" style="display: none;">
+                No logs available
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin || 'http://localhost:4000';
+        let currentAPIKey = localStorage.getItem('lokivector_api_key') || '';
+
+        // Initialize
+        if (currentAPIKey) {
+            document.getElementById('apiKeyInput').value = currentAPIKey;
+            setAPIKey();
+        }
+
+        function setAPIKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (!key) {
+                showError('apiKeyStatus', 'Please enter an API key');
+                return;
+            }
+
+            currentAPIKey = key;
+            localStorage.setItem('lokivector_api_key', key);
+            
+            // Test the key
+            fetch(`${API_BASE}/collections`, {
+                headers: { 'X-API-Key': key }
+            })
+            .then(res => {
+                if (res.ok) {
+                    showSuccess('apiKeyStatus', '✓ Connected successfully');
+                    loadDashboard();
+                } else {
+                    showError('apiKeyStatus', 'Invalid API key');
+                }
+            })
+            .catch(err => {
+                showError('apiKeyStatus', 'Connection error: ' + err.message);
+            });
+        }
+
+        function loadDashboard() {
+            document.getElementById('statsSection').style.display = 'grid';
+            document.getElementById('collectionsSection').style.display = 'block';
+            document.getElementById('keysSection').style.display = 'block';
+            document.getElementById('logsSection').style.display = 'block';
+
+            loadStats();
+            loadCollections();
+            loadAPIKeys();
+            loadLogs();
+
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadStats();
+                loadCollections();
+            }, 30000);
+        }
+
+        function loadStats() {
+            fetch(`${API_BASE}/health`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('statCollections').textContent = data.collections || 0;
+            })
+            .catch(err => console.error('Stats error:', err));
+        }
+
+        function loadCollections() {
+            const loading = document.getElementById('collectionsLoading');
+            const error = document.getElementById('collectionsError');
+            const table = document.getElementById('collectionsTable');
+            const empty = document.getElementById('collectionsEmpty');
+            const body = document.getElementById('collectionsBody');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            table.style.display = 'none';
+            empty.style.display = 'none';
+
+            fetch(`${API_BASE}/collections`, {
+                headers: { 'X-API-Key': currentAPIKey }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load collections');
+                return res.json();
+            })
+            .then(collections => {
+                loading.style.display = 'none';
+
+                if (collections.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                body.innerHTML = '';
+                let totalDocs = 0;
+                let totalVectors = 0;
+
+                collections.forEach(coll => {
+                    const row = document.createElement('tr');
+                    const docCount = coll.count || 0;
+                    const hasVector = coll.hasVectorIndex || false;
+                    totalDocs += docCount;
+
+                    row.innerHTML = `
+                        <td><strong>${coll.name}</strong></td>
+                        <td>${docCount.toLocaleString()}</td>
+                        <td>${hasVector ? 'Yes' : 'No'}</td>
+                        <td>${formatSize(coll.size || 0)}</td>
+                        <td>${hasVector ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+                    `;
+                    body.appendChild(row);
+                });
+
+                document.getElementById('statDocuments').textContent = totalDocs.toLocaleString();
+                table.style.display = 'table';
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = 'Error loading collections: ' + err.message;
+            });
+        }
+
+        function loadAPIKeys() {
+            const loading = document.getElementById('keysLoading');
+            const error = document.getElementById('keysError');
+            const table = document.getElementById('keysTable');
+            const empty = document.getElementById('keysEmpty');
+            const body = document.getElementById('keysBody');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            table.style.display = 'none';
+            empty.style.display = 'none';
+
+            fetch(`${API_BASE}/api/keys`, {
+                headers: { 'X-API-Key': currentAPIKey }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load API keys');
+                return res.json();
+            })
+            .then(keys => {
+                loading.style.display = 'none';
+
+                if (keys.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                body.innerHTML = '';
+                keys.forEach(key => {
+                    const row = document.createElement('tr');
+                    const created = new Date(key.createdAt).toLocaleString();
+                    const lastUsed = key.lastUsed ? new Date(key.lastUsed).toLocaleString() : 'Never';
+
+                    row.innerHTML = `
+                        <td><code style="font-size: 0.8rem;">${key.id.substring(0, 20)}...</code></td>
+                        <td>${key.metadata.name || 'Unnamed'}</td>
+                        <td>${key.userId}</td>
+                        <td>${created}</td>
+                        <td>${lastUsed}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;" 
+                                    onclick="revokeKey('${key.id}')">Revoke</button>
+                        </td>
+                    `;
+                    body.appendChild(row);
+                });
+
+                table.style.display = 'table';
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = 'Error loading API keys: ' + err.message;
+            });
+        }
+
+        function loadLogs() {
+            // Placeholder for logs - would need a logs endpoint
+            document.getElementById('logsLoading').style.display = 'none';
+            document.getElementById('logsEmpty').style.display = 'block';
+        }
+
+        function createAPIKey() {
+            const name = prompt('Enter a name for the new API key:');
+            if (!name) return;
+
+            fetch(`${API_BASE}/api/keys`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': currentAPIKey
+                },
+                body: JSON.stringify({
+                    metadata: { name: name }
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.key) {
+                    alert(`API Key created!\n\nID: ${data.id}\nKey: ${data.key}\n\n⚠️ Save this key now - it will not be shown again!`);
+                    loadAPIKeys();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                alert('Error creating API key: ' + err.message);
+            });
+        }
+
+        function revokeKey(keyId) {
+            if (!confirm('Are you sure you want to revoke this API key?')) return;
+
+            fetch(`${API_BASE}/api/keys/${keyId}`, {
+                method: 'DELETE',
+                headers: { 'X-API-Key': currentAPIKey }
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert('API key revoked successfully');
+                loadAPIKeys();
+            })
+            .catch(err => {
+                alert('Error revoking key: ' + err.message);
+            });
+        }
+
+        function showSuccess(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            el.className = 'badge badge-success';
+            el.textContent = message;
+        }
+
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            el.className = 'error';
+            el.textContent = message;
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
+

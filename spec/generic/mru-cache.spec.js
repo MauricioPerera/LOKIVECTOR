@@ -3,8 +3,8 @@
  */
 
 if (typeof (window) === 'undefined') {
-  var loki = require('../../src/lokijs.js');
-  var MRUCache = require('../../src/mru-cache.js');
+  var loki = require("../../src/core/lokijs.js");
+  var MRUCache = require("../../src/commercial/mru-cache.js");
 }
 
 describe('MRUCache', function () {

@@ -1,4 +1,4 @@
-if (typeof(window) === 'undefined') var loki = require('../../src/lokijs.js');
+if (typeof(window) === 'undefined') var loki = require("../../src/core/lokijs.js")');
 
 describe('joins', function () {
   var db, directors, films;
@@ -115,7 +115,7 @@ describe('joins', function () {
     expect(joined[0].right.name).toEqual('Steven Spielberg');
   });
 });
-// var Loki = require('../src/lokijs.js'),
+// var Loki = require("../../src/core/lokijs.js")'),
 //   gordian = require('gordian'),
 //   suite = new gordian('testJoins'),
 

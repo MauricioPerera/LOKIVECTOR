@@ -1,8 +1,48 @@
-docs/
-benchmark/
-demos/
-examples/
-jsdoc/
-tutorials/
-spec/
+# Commercial and Enterprise code
+src/commercial/
+server/commercial/
+server/index.js
+
+# Development files
+*.log
+.DS_Store
+node_modules/
 coverage/
+.nyc_output/
+.vscode/
+.idea/
+
+# Build artifacts
+build/
+dist/
+*.min.js.map
+
+# Test files (optional - you may want to include these)
+# spec/
+# test/
+
+# Documentation that references Commercial features
+# (Keep main docs, but you can exclude internal docs)
+# PLAN_SEPARACION_REPO.md
+# IMPLEMENTACION_SEPARACION.md
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/workflows/
+.travis.yml
+.circleci/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~

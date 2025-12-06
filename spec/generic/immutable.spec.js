@@ -1,5 +1,5 @@
 "use strict";
-if (typeof (window) === 'undefined') var loki = require('../../src/lokijs.js');
+if (typeof (window) === 'undefined') var loki = require("../../src/core/lokijs.js")');
 
 describe('immutable', function () {
   function deepFreeze(obj) {

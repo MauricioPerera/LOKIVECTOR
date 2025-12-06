@@ -3,10 +3,10 @@
  */
 
 if (typeof require !== 'undefined') {
-  var loki = require('../../src/lokijs.js');
+  var loki = require("../../src/core/lokijs.js")');
   try {
-    var HNSWIndex = require('../../src/loki-hnsw-index.js');
-    require('../../src/loki-vector-plugin.js');
+    var HNSWIndex = require("../../src/core/loki-hnsw-index.js")');
+    require("../../src/core/loki-vector-plugin.js")');
   } catch (e) {
     // Ignore require errors, might be running in browser/karma
   }

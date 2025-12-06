@@ -1,9 +1,20 @@
 {
-  "name": "lokijs",
+  "name": "@lokivector/core",
   "version": "1.5.12",
-  "description": "Fast document oriented javascript in-memory database",
+  "description": "LokiVector Community Edition - Fast document-oriented in-memory database with vector search (MIT Licensed)",
   "homepage": "https://techfort.github.io/LokiJS/",
-  "main": "src/lokijs.js",
+  "main": "src/core/lokijs.js",
+  "files": [
+    "src/core/",
+    "server/core/",
+    "docs/",
+    "LICENSE",
+    "LICENSE_FEATURES.md",
+    "TRADEMARK_POLICY.md",
+    "EDITIONS.md",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "directories": {
     "example": "examples"
   },
@@ -25,6 +36,7 @@
     "lint": "jshint src",
     "test:browser": "CHROME_BIN=${CHROME_BIN:-} karma start karma.conf.js --single-run",
     "test:node": "jasmine",
+    "test:e2e": "jasmine spec/e2e/server.spec.js",
     "pretest": "npm run lint",
     "test": "npm run test:browser && npm run test:node",
     "build:lokijs": "uglifyjs src/lokijs.js > build/lokijs.min.js",

@@ -1,13 +1,52 @@
+/**
+ * LokiVector Commercial Module - Proprietary License
+ * 
+ * Copyright (c) 2025 LokiVector Contributors
+ * 
+ * This file is part of LokiVector Commercial Edition.
+ * Unauthorized copying, hosting, or redistribution is prohibited.
+ * 
+ * This software is licensed under the LokiVector Commercial License.
+ * See LICENSE-COMMERCIAL.md for terms.
+ * 
+ * For licensing inquiries: commercial@lokivector.io
+ * 
+ * All rights reserved.
+ */
+
+/**
+ * LokiVector Server - Full Edition (MIT + Commercial)
+ * 
+ * This is the full server that includes both MIT and Commercial features.
+ * For MIT-only version, see server/core/index.js
+ * 
+ * ⚠️  NOTE: This file includes Commercial features and should NOT be included
+ * in MIT-only releases. Use server/core/index.js for public releases.
+ * 
+ * Copyright (c) 2025 LokiVector Contributors
+ * MIT License for core features, Commercial License for replication features
+ * See LICENSE_FEATURES.md for details
+ */
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const loki = require('../src/lokijs.js');
-const HNSWIndex = require('../src/loki-hnsw-index.js');
-require('../src/loki-vector-plugin.js');
-const LokiOplog = require('../src/loki-oplog.js');
-const APIKeyManager = require('./auth/api-keys.js');
-const { createAuthMiddleware, optionalAuth } = require('./middleware/auth.js');
-const { RateLimiter, createRateLimitMiddleware } = require('./middleware/rate-limit.js');
+const loki = require('../src/core/lokijs.js');
+const HNSWIndex = require('../src/core/loki-hnsw-index.js');
+require('../src/core/loki-vector-plugin.js');
+
+// Commercial features (require license)
+let LokiOplog = null;
+try {
+  LokiOplog = require('../src/commercial/loki-oplog.js');
+} catch (e) {
+  console.warn('Commercial features not available. Using MIT edition only.');
+}
+
+const APIKeyManager = require('./core/auth/api-keys.js');
+const { createAuthMiddleware, optionalAuth } = require('./core/middleware/auth.js');
+const { RateLimiter, createRateLimitMiddleware } = require('./core/middleware/rate-limit.js');
+const { requireCommercial } = require('../src/core/edition.js');
 
 const fs = require('fs');
 const path = require('path');
@@ -59,15 +98,25 @@ const REPLICATION_ROLE = process.env.REPLICATION_ROLE || 'leader'; // 'leader' o
 const LEADER_URL = process.env.LEADER_URL || 'http://localhost:4000';
 const SYNC_INTERVAL = parseInt(process.env.SYNC_INTERVAL) || 5000;
 
-// Initialize Oplog for Leader
+// Initialize Oplog for Leader (Commercial feature)
 let oplog = null;
 if (REPLICATION_ROLE === 'leader') {
-  oplog = new LokiOplog({
-    db: db,
-    maxSize: 10000,
-    retentionDays: 7,
-    collectionName: '__oplog__'
-  });
+  if (!LokiOplog) {
+    console.error('Replication requires Commercial license. See LICENSE-COMMERCIAL.md');
+    throw new Error('Replication feature requires LokiVector Pro or Enterprise license');
+  }
+  try {
+    requireCommercial('Leader-Follower Replication');
+    oplog = new LokiOplog({
+      db: db,
+      maxSize: 10000,
+      retentionDays: 7,
+      collectionName: '__oplog__'
+    });
+  } catch (e) {
+    console.error('Commercial license required for replication:', e.message);
+    throw e;
+  }
 }
 
 // Initialize API Key Manager (new system)
@@ -184,9 +233,55 @@ function enableChangesApi() {
 
 // Routes
 
-// 0. Serve Admin Dashboard
+// 0. Serve Admin Dashboard (legacy)
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, '../admin_dashboard.html'));
+});
+
+// Serve new Dashboard
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dashboard/index.html'));
+});
+
+// Serve OpenAPI documentation
+app.get('/api-docs', (req, res) => {
+    res.sendFile(path.join(__dirname, '../docs/openapi.yaml'));
+});
+
+// Serve Swagger UI (if swagger-ui-express is available)
+app.get('/swagger', (req, res) => {
+    res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LokiVector API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+    <style>
+        html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin:0; background: #fafafa; }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: '/api-docs',
+                dom_id: '#swagger-ui',
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                layout: "StandaloneLayout"
+            });
+        };
+    </script>
+</body>
+</html>
+    `);
 });
 
 // 1. Get Server Status
@@ -417,8 +512,41 @@ async function startFollowerSync() {
   }, SYNC_INTERVAL);
 }
 
-// 2. Create Collection
-app.post('/collections', (req, res) => {
+// 2. List Collections (with metadata)
+app.get('/collections', authenticate, rateLimit, (req, res) => {
+  try {
+    const collections = db.listCollections();
+    const result = collections.map(coll => {
+      let count = 0;
+      let size = 0;
+      let hasVectorIndex = false;
+      
+      try {
+        count = coll.count ? coll.count() : (coll.data ? coll.data.length : 0);
+        // Estimate size (rough calculation)
+        size = JSON.stringify(coll.data || []).length;
+        // Check if collection has vector index
+        hasVectorIndex = !!(coll.vectorIndex || coll.getVectorIndex);
+      } catch (e) {
+        console.error('Error getting collection metadata:', e);
+      }
+      
+      return {
+        name: coll.name,
+        count: count,
+        size: size,
+        hasVectorIndex: hasVectorIndex
+      };
+    });
+    
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Create Collection
+app.post('/collections', authenticate, rateLimit, (req, res) => {
   const { name, options } = req.body;
   if (!name) return res.status(400).json({ error: 'Collection name required' });
   
@@ -437,7 +565,7 @@ app.post('/collections', (req, res) => {
   res.json({ message: `Collection '${name}' created` });
 });
 
-// 3. Create Vector Index
+// 4. Create Vector Index
 app.post('/collections/:name/index', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { field, options } = req.body;
@@ -453,7 +581,7 @@ app.post('/collections/:name/index', authenticate, rateLimit, (req, res) => {
   }
 });
 
-// 4. Insert Document(s)
+// 5. Insert Document(s)
 app.post('/collections/:name/insert', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const docs = req.body; // Can be object or array
@@ -472,7 +600,7 @@ app.post('/collections/:name/insert', authenticate, rateLimit, (req, res) => {
   }
 });
 
-// 5. Find Documents (Standard Query)
+// 6. Find Documents (Standard Query)
 app.post('/collections/:name/find', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { query, limit } = req.body;
@@ -489,7 +617,7 @@ app.post('/collections/:name/find', authenticate, rateLimit, (req, res) => {
   }
 });
 
-// 6. Search (Vector or Hybrid)
+// 7. Search (Vector or Hybrid)
 app.post('/collections/:name/search', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { vector, field, limit, filter } = req.body;
@@ -521,7 +649,7 @@ app.post('/collections/:name/search', authenticate, rateLimit, (req, res) => {
   }
 });
 
-// 7. Update Document(s)
+// 8. Update Document(s)
 app.post('/collections/:name/update', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { query, update } = req.body;
@@ -567,7 +695,7 @@ app.post('/collections/:name/update', authenticate, rateLimit, (req, res) => {
   }
 });
 
-// 8. Remove Document(s)
+// 9. Remove Document(s)
 app.post('/collections/:name/remove', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { query } = req.body;
@@ -599,7 +727,7 @@ app.post('/collections/:name/remove', authenticate, rateLimit, (req, res) => {
   }
 });
 
-// 9. Enable MRU Cache
+// 10. Enable MRU Cache
 app.post('/collections/:name/cache', authenticate, rateLimit, (req, res) => {
   const { name } = req.params;
   const { capacity } = req.body;

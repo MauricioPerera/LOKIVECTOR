@@ -1,5 +1,5 @@
  if (typeof (window) === 'undefined') {
-   var loki = require('../../src/lokijs.js');
+   var loki = require("../../src/core/lokijs.js")');
    // var suite = require('../helpers/assert-helpers.js').suite;
  }
 

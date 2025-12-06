@@ -92,7 +92,7 @@
 
 // cryptedFileAdapter.setSecret('mySecret');
 
-// var loki = require('../src/lokijs.js'),
+// var loki = require("../../src/core/lokijs.js")'),
 // 	db = new loki('./loki.json.crypted',{ adapter: cryptedFileAdapter }),
 // 	gordian = require('gordian'),
 // 	suite = new gordian('testCryptedFileAdapter'),

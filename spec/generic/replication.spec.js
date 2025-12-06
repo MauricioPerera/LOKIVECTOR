@@ -1,10 +1,26 @@
 /**
+ * LokiVector Commercial Module - Proprietary License
+ * 
+ * Copyright (c) 2025 LokiVector Contributors
+ * 
+ * This file is part of LokiVector Commercial Edition.
+ * Unauthorized copying, hosting, or redistribution is prohibited.
+ * 
+ * This software is licensed under the LokiVector Commercial License.
+ * See LICENSE-COMMERCIAL.md for terms.
+ * 
+ * For licensing inquiries: commercial@lokivector.io
+ * 
+ * All rights reserved.
+ */
+
+/**
  * Replication and Oplog Tests
  */
 
 if (typeof (window) === 'undefined') {
-  var loki = require('../../src/lokijs.js');
-  var LokiOplog = require('../../src/loki-oplog.js');
+  var loki = require("../../src/core/lokijs.js");
+  var LokiOplog = require("../../src/commercial/loki-oplog.js");
 }
 
 describe('LokiOplog', function () {

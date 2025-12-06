@@ -1,4 +1,4 @@
-// var loki = require('../src/lokijs.js'),
+// var loki = require("../../src/core/lokijs.js")'),
 // 	db = new loki('./loki.json'),
 // 	gordian = require('gordian'),
 // 	suite = new gordian('nodePersistence'),

@@ -1,4 +1,4 @@
-if (typeof (window) === 'undefined') var loki = require('../../src/lokijs.js');
+if (typeof (window) === 'undefined') var loki = require("../../src/core/lokijs.js")');
 
 describe('sorting and indexing', function () {
   beforeEach(function () {

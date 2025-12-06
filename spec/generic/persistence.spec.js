@@ -1,4 +1,4 @@
-if (typeof (window) === 'undefined') var loki = require('../../src/lokijs.js');
+if (typeof (window) === 'undefined') var loki = require("../../src/core/lokijs.js")');
 
 describe('testing unique index serialization', function () {
   var db;

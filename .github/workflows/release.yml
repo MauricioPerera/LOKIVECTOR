@@ -1,0 +1,54 @@
+name: MIT Release Validation
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: '0.1.0'
+
+jobs:
+  validate-mit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Validate MIT-only release
+        run: node scripts/prepare-mit-release.js
+      
+      - name: Check license headers
+        run: node scripts/add-license-headers.js --dry-run
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Create release
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          body: |
+            ## LokiVector Community Edition (MIT)
+            
+            This release contains only MIT-licensed code.
+            
+            Commercial features are available separately.
+            See LICENSE_FEATURES.md for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

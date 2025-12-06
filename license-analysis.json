@@ -1,0 +1,434 @@
+{
+  "MIT": [
+    {
+      "path": "server/auth/api-keys.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "server/middleware/auth.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "server/middleware/rate-limit.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "server/tcp-server.js",
+      "reason": "Basic server code (default MIT)"
+    },
+    {
+      "path": "src/aws-s3-sync-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/incremental-indexeddb-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/jquery-sync-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/loki-angular.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/loki-crypted-file-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/loki-fs-structured-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/loki-fs-sync-adapter.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "src/loki-hnsw-index.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "src/loki-incremental-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/loki-indexed-adapter.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "src/loki-nativescript-adapter.js",
+      "reason": "Core source file (default MIT)"
+    },
+    {
+      "path": "src/loki-vector-plugin.js",
+      "reason": "Filename matches MIT feature list"
+    },
+    {
+      "path": "src/lokijs.js",
+      "reason": "Filename matches MIT feature list"
+    }
+  ],
+  "COMMERCIAL": [
+    {
+      "path": "benchmark_cache.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "scripts/add-license-headers.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "scripts/analyze-licenses.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "scripts/prepare-mit-release.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "server/index.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "server/saas-middleware.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "spec/e2e/crash-recovery.spec.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "spec/generic/mru-cache.spec.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "spec/generic/replication.spec.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "spec/helpers/crash-helper.js",
+      "reason": "Contains replication code"
+    },
+    {
+      "path": "src/edition.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "src/loki-oplog.js",
+      "reason": "Filename or content matches Commercial feature"
+    },
+    {
+      "path": "src/mru-cache.js",
+      "reason": "Filename or content matches Commercial feature"
+    }
+  ],
+  "ENTERPRISE": [
+    {
+      "path": "karma.build.conf.js",
+      "reason": "Filename or content matches Enterprise feature"
+    },
+    {
+      "path": "karma.conf.js",
+      "reason": "Filename or content matches Enterprise feature"
+    },
+    {
+      "path": "scripts/add-headers.js",
+      "reason": "Filename or content matches Enterprise feature"
+    },
+    {
+      "path": "spec/generic/sortingIndexing.spec.js",
+      "reason": "Filename or content matches Enterprise feature"
+    },
+    {
+      "path": "src/core/edition.js",
+      "reason": "Filename or content matches Enterprise feature"
+    }
+  ],
+  "UNKNOWN": [
+    {
+      "path": "benchmark/benchmark.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/benchmark_binary.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/benchmark_remove.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/benchmark_sorting.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/benchmark_web.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/bindex-stress.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/destress.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/stress.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark/throttled-stress.js",
+      "reason": ""
+    },
+    {
+      "path": "benchmark_kv.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/collections.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/init.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/key.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/logs.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/shell.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/start.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/stats.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/commands/status.js",
+      "reason": ""
+    },
+    {
+      "path": "cli/loki-vector.js",
+      "reason": ""
+    },
+    {
+      "path": "coverage/Chrome Headless 143.0.0.0 (Linux 0.0.0)/prettify.js",
+      "reason": ""
+    },
+    {
+      "path": "coverage/Chrome Headless 143.0.0.0 (Linux 0.0.0)/sorter.js",
+      "reason": ""
+    },
+    {
+      "path": "demo_saas.js",
+      "reason": ""
+    },
+    {
+      "path": "docs/scripts/linenumber.js",
+      "reason": ""
+    },
+    {
+      "path": "docs/scripts/prettify/lang-css.js",
+      "reason": ""
+    },
+    {
+      "path": "docs/scripts/prettify/prettify.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/example.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/log-analysis.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/loki-continuum.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart-chaining.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart-core.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart-dynview.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart-transforms.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart1.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart2.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart3.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/quickstart4.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/recommendation-engine.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/sandbox/jquery-2.1.0.min.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/sandbox/sandbox.min.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/session-store-tcp.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/shopping-cart.js",
+      "reason": ""
+    },
+    {
+      "path": "examples/vector-search-example.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/browser/incrementalIdb.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/e2e/server.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/autoUpdate.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/binaryidx.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/changesApi.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/cloning.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/collection.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/dirtyIds.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/dynamicview.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/eventEmitter.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/helpers.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/hnsw.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/immutable.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/joins.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/kv.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/mongo_compat.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/ops.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/persistence.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/remove.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/stage.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/stats.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/test.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/transforms.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/typed.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/generic/unique.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/helpers/assert-helpers.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/helpers/db-save-helper.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/node/cryptedFileAdapter.spec.js",
+      "reason": ""
+    },
+    {
+      "path": "spec/node/nodePersistence.spec.js",
+      "reason": ""
+    }
+  ]
+}
