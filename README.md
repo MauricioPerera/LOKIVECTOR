@@ -117,12 +117,19 @@ For node and nativescript environments you can install through `npm install loki
 
 ## Roadmap
 
-* exactIndex
-* key-value datastore
-* MRU cache
-* MongoDB API compatibility
-* server standalone (tcp and http servers and clients)
-* replication and horizontal scaling
+### Completed ✅
+* Vector search (HNSW) & Embeddings support
+* Standalone HTTP Server (LokiVector)
+* ExactIndex (Implemented in core)
+
+### In Progress 🚧
+* Horizontal scaling & Replication
+* Key-value datastore optimization
+
+### Planned 📅
+* MongoDB API compatibility layer
+* MRU cache improvements
+* TCP Server for higher performance
 
 ## Contact
 
