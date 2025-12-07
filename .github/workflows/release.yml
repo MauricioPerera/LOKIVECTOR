@@ -34,12 +34,24 @@ jobs:
       - name: Run tests
         run: npm test
       
+      - name: Extract tag name
+        id: tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          # Check if tag contains pre-release markers
+          if [[ "$TAG_NAME" =~ -(alpha|beta|rc|pre) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Create release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: Release ${{ steps.tag.outputs.tag_name }}
           body: |
             ## LokiVector Community Edition (MIT)
             
@@ -48,7 +60,7 @@ jobs:
             Commercial features are available separately.
             See LICENSE_FEATURES.md for details.
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.tag.outputs.is_prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
