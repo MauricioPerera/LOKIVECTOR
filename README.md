@@ -6,14 +6,17 @@ LokiVector combines the simplicity of a document database with the power of vect
 backed by enterprise-grade durability and crash recovery. Built for modern AI applications 
 that need fast, reliable, and crash-safe data storage.
 
-[![Join the chat at https://gitter.im/techfort/LokiJS](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/techfort/LokiJS?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-![alt CI-badge](https://travis-ci.org/techfort/LokiJS.svg?branch=master)
-[![npm version](https://badge.fury.io/js/lokijs.svg)](http://badge.fury.io/js/lokijs)
-[![alt packagequality](http://npm.packagequality.com/shield/lokijs.svg)](http://packagequality.com/#?package=lokijs)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](https://github.com/MauricioPerera/LOKIVECTOR/releases)
+[![GitHub stars](https://img.shields.io/github/stars/MauricioPerera/LOKIVECTOR?style=social)](https://github.com/MauricioPerera/LOKIVECTOR)
 
-## 🚀 What's New: LokiVector MVP
+## 🎉 Latest Release: v0.1.0
 
-This fork extends LokiJS with production-ready features for the AI era:
+**Community Edition (MIT License)** - First public release with crash-tested durability and vector search.
+
+### What's New in v0.1.0
+
+This release includes production-ready features for the AI era:
 
 - ✅ **Vector Search** - HNSW-based similarity search for embeddings
 - ✅ **HTTP Server** - RESTful API with authentication and rate limiting
@@ -44,13 +47,13 @@ This fork extends LokiJS with production-ready features for the AI era:
 ### Install
 
 ```bash
-npm install lokijs
+npm install @lokivector/core
 ```
 
 ### Basic Usage
 
 ```javascript
-const loki = require('lokijs');
+const loki = require('@lokivector/core');
 const db = new loki('example.db');
 
 // Add a collection
@@ -87,7 +90,7 @@ const results = products.findNearest('embedding', [0.15, 0.25, 0.35, 0.45, 0.55]
 
 ```bash
 # Start the server
-node server/index.js
+node server/core/index.js
 
 # Create an API key
 curl -X POST http://localhost:4000/api/keys \
@@ -109,7 +112,7 @@ http://localhost:4000/dashboard
 
 ```bash
 # Install CLI globally
-npm install -g lokijs
+npm install -g @lokivector/core
 
 # Initialize project
 loki-vector init
@@ -237,7 +240,7 @@ npm test
 ### NPM
 
 ```bash
-npm install lokijs
+npm install @lokivector/core
 ```
 
 ### Browser
@@ -346,7 +349,9 @@ See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for a complete mapping of which f
 
 ## 🔗 Links
 
-- **GitHub**: https://github.com/MauricioPerera/db
+- **GitHub**: https://github.com/MauricioPerera/LOKIVECTOR
+- **Releases**: https://github.com/MauricioPerera/LOKIVECTOR/releases
+- **Issues**: https://github.com/MauricioPerera/LOKIVECTOR/issues
 - **Documentation**: See `docs/` directory
 - **Issues**: GitHub Issues
 - **Chat**: Gitter
