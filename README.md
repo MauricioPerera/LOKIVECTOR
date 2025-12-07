@@ -20,21 +20,28 @@ This release includes production-ready features for the AI era:
 
 - ✅ **Vector Search** - HNSW-based similarity search for embeddings
 - ✅ **HTTP Server** - RESTful API with authentication and rate limiting
-- ✅ **Replication** - Leader-Follower replication with persistent oplog
-- ✅ **MRU Cache** - 200× speedup for frequent queries
 - ✅ **API Keys** - Secure API key management
-- ✅ **Dashboard** - Web-based administration dashboard
+- ✅ **Rate Limiting** - Configurable rate limits per API key
 - ✅ **CLI** - Command-line interface for server management
 - ✅ **OpenAPI Docs** - Complete API documentation with Swagger UI
+- ✅ **Crash Recovery** - Validated crash recovery with E2E tests
+
+**Commercial Features (Pro/Enterprise):**
+- 💼 **Replication** - Leader-Follower replication with persistent oplog
+- 💼 **Advanced MRU Cache** - 200× speedup for frequent queries
+- 💼 **Dashboard** - Web-based administration dashboard
 
 ## 📚 Documentation
 
 ### Core Documentation
 - **[Full Documentation Index](docs/INDEX.md)** - Complete documentation guide
-- **[Replication Guide](docs/REPLICATION.md)** - Leader-Follower replication
 - **[Vector Search Guide](docs/VECTOR_SEARCH.md)** - HNSW vector similarity search
-- **[MRU Cache Guide](docs/MRU_CACHE.md)** - Query result caching
 - **[TCP Server Guide](docs/TCP_SERVER.md)** - High-performance TCP server
+- **[Durability Guide](docs/DURABILITY.md)** - Crash recovery and data integrity
+
+### Commercial Documentation (Pro/Enterprise)
+- **[Replication Guide](docs/REPLICATION.md)** - Leader-Follower replication (Commercial)
+- **[MRU Cache Guide](docs/MRU_CACHE.md)** - Advanced query result caching (Commercial)
 
 ### MVP Documentation
 - **[Quick Start Guide](GUIA_RAPIDA_MVP.md)** - Get started in 5 minutes
@@ -130,17 +137,18 @@ loki-vector collections list
 ## 🛡️ Durability & Crash Recovery
 
 LokiVector is **crash-safe** and validated with comprehensive end-to-end tests. 
-We test crash recovery across documents, collections, vector indexes, and replication 
+We test crash recovery across documents, collections, and vector indexes 
 with automated end-to-end tests.
 
 ### What We Guarantee
 
 ✅ **Complete Data Recovery** - All documents recover after crashes  
 ✅ **Vector Index Integrity** - HNSW indexes rebuild correctly  
-✅ **Oplog Consistency** - Replication logs maintain consistency  
 ✅ **Partial Write Safety** - No corruption from interrupted operations  
 ✅ **Idempotent Operations** - Safe to retry after failures  
-✅ **Stress Tested** - Validated through multiple sequential crashes  
+✅ **Stress Tested** - Validated through multiple sequential crashes
+
+**Note:** Oplog consistency and replication recovery are tested in Commercial editions. See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for details.  
 
 ### How It Works
 
@@ -148,7 +156,6 @@ LokiVector uses a combination of:
 - **Journal-based persistence** - All changes logged before commit
 - **Automatic recovery** - Validates and repairs on startup
 - **Index reconstruction** - Vector indexes rebuild if needed
-- **Oplog consistency** - Replication state maintained across crashes
 
 See [Durability Documentation](docs/DURABILITY.md) for technical details.
 
@@ -158,10 +165,11 @@ Our crash recovery suite includes:
 - 7 comprehensive E2E test scenarios
 - Document recovery validation
 - Vector index recovery validation
-- Replication consistency checks
 - Partial write handling
 - Idempotency verification
 - Stress tests with multiple sequential crashes
+
+**Note:** Replication consistency checks are part of Commercial edition tests. See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for details.
 
 **Result:** 0 data loss, 0 corruption, 100% recovery rate in all tested scenarios.
 
@@ -176,48 +184,60 @@ Our crash recovery suite includes:
 - **Persistence** - Multiple adapters (IndexedDB, File System, Memory)
 - **Query API** - MongoDB-like query syntax
 
-### Advanced Features
+### Advanced Features (Community Edition - MIT)
 - **Vector Search** - HNSW algorithm for approximate nearest neighbor search
-- **Replication** - Leader-Follower replication with oplog
-- **MRU Cache** - Most Recently Used cache for query results
 - **HTTP Server** - RESTful API with Express.js
 - **TCP Server** - High-performance raw TCP server
 - **Authentication** - API key-based authentication
 - **Rate Limiting** - Configurable rate limits per API key
-- **Dashboard** - Web-based administration interface
 - **CLI** - Command-line interface
 - **OpenAPI** - Complete API documentation
+- **Crash Recovery** - Validated crash recovery with E2E tests
+
+### Commercial Features (Pro/Enterprise - Commercial License)
+- **Replication** - Leader-Follower replication with persistent oplog
+- **Advanced MRU Cache** - Most Recently Used cache for query results (200× speedup)
+- **Dashboard** - Web-based administration interface
+- **Multi-Tenant Support** - Isolated data per tenant (Enterprise)
+- **SSO/SAML** - Single sign-on integration (Enterprise)
+- **RBAC** - Fine-grained role-based access control (Enterprise)
+- **Audit Logs** - Comprehensive audit logging (Enterprise)
+
+See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for complete feature mapping.
 
 ## 🏗️ Architecture
 
 ### Components
 
 ```
-LokiJS Core
+LokiJS Core [MIT]
 ├── Document Store
 ├── Indexing System
 ├── Persistence Adapters
 └── Query Engine
 
-LokiVector Extensions
+LokiVector Extensions [MIT]
 ├── Vector Search (HNSW)
-├── Replication (Leader-Follower)
-├── MRU Cache
 ├── HTTP Server
 ├── TCP Server
 ├── Authentication (API Keys)
 ├── Rate Limiting
-├── Dashboard
 └── CLI
+
+Commercial Features [Commercial License]
+├── Replication (Leader-Follower)
+├── Advanced MRU Cache
+└── Dashboard
 ```
 
 ## 📈 Performance
 
 - **Query Speed**: < 1ms for indexed queries
 - **Vector Search**: < 0.5ms per search (HNSW)
-- **MRU Cache**: 200× speedup for cached queries
 - **TCP Server**: < 1ms latency
 - **Memory**: Efficient in-memory storage
+
+**Note:** Advanced MRU Cache (200× speedup) is available in Commercial editions. See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for details.
 
 ## 🧪 Testing
 
@@ -257,14 +277,10 @@ npm install @lokivector/core
 # Server port
 PORT=4000
 
-# Replication role
-REPLICATION_ROLE=leader  # or 'follower'
-
-# Leader URL (for followers)
-LEADER_URL=http://localhost:4000
-
-# Sync interval (for followers)
-SYNC_INTERVAL=5000
+# Replication role (Commercial feature - requires Pro/Enterprise license)
+# REPLICATION_ROLE=leader  # or 'follower'
+# LEADER_URL=http://localhost:4000
+# SYNC_INTERVAL=5000
 
 # Database file
 DB_FILE=data/loki-vector.db
@@ -276,8 +292,9 @@ See the `examples/` directory for:
 - Basic usage examples
 - Vector search examples
 - TCP server examples
-- Replication examples
 - HTTP API examples
+
+**Note:** Replication examples are available in Commercial editions. See [LICENSE_FEATURES.md](LICENSE_FEATURES.md) for details.
 
 ## 🤝 Contributing
 
